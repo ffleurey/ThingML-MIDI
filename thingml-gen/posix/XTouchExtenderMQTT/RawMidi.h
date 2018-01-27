@@ -49,8 +49,8 @@ void register_external_RawMidi_send_rawmidi_midi_error_listener(void (*_listener
 
 // Definition of the states:
 #define RAWMIDI_RAWMIDISC_STATE 0
-#define RAWMIDI_RAWMIDISC_CONNECTED_STATE 1
-#define RAWMIDI_RAWMIDISC_DISCONNECTED_STATE 2
+#define RAWMIDI_RAWMIDISC_DISCONNECTED_STATE 1
+#define RAWMIDI_RAWMIDISC_CONNECTED_STATE 2
 
 
 

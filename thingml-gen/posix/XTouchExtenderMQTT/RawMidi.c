@@ -174,10 +174,10 @@ _instance->RawMidi_RawMidiSC_State = RAWMIDI_RAWMIDISC_DISCONNECTED_STATE;
 RawMidi_RawMidiSC_OnEntry(_instance->RawMidi_RawMidiSC_State, _instance);
 break;
 }
-case RAWMIDI_RAWMIDISC_CONNECTED_STATE:{
+case RAWMIDI_RAWMIDISC_DISCONNECTED_STATE:{
 break;
 }
-case RAWMIDI_RAWMIDISC_DISCONNECTED_STATE:{
+case RAWMIDI_RAWMIDISC_CONNECTED_STATE:{
 break;
 }
 default: break;
@@ -190,9 +190,9 @@ switch(state) {
 case RAWMIDI_RAWMIDISC_STATE:{
 RawMidi_RawMidiSC_OnExit(_instance->RawMidi_RawMidiSC_State, _instance);
 break;}
-case RAWMIDI_RAWMIDISC_CONNECTED_STATE:{
-break;}
 case RAWMIDI_RAWMIDISC_DISCONNECTED_STATE:{
+break;}
+case RAWMIDI_RAWMIDISC_CONNECTED_STATE:{
 break;}
 default: break;
 }

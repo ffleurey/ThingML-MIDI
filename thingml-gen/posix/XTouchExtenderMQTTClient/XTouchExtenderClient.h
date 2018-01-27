@@ -27,9 +27,9 @@ uint16_t id_xtouch;
 // Variables for the current instance state
 int XTouchExtenderClient_XTouchExtenderTestSC_State;
 // Variables for the properties of the instance
+uint8_t XTouchExtenderClient_current_bank_var;
 uint8_t * XTouchExtenderClient_slider_values_var;
 uint16_t XTouchExtenderClient_slider_values_var_size;
-uint8_t XTouchExtenderClient_current_bank_var;
 
 };
 // Declaration of prototypes outgoing messages :

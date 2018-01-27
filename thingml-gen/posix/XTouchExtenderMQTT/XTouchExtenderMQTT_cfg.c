@@ -28,8 +28,8 @@
  *****************************************************************************/
 
 uint8_t array_parser_MidiParser_MidiEchoSC_NoteOff_buf_var[2];
-uint8_t array_parser_MidiParser_MidiEchoSC_PBendChange_buf_var[2];
 uint8_t array_parser_MidiParser_MidiEchoSC_NoteOn_buf_var[2];
+uint8_t array_parser_MidiParser_MidiEchoSC_PBendChange_buf_var[2];
 uint8_t array_parser_MidiParser_MidiEchoSC_CtrlChange_buf_var[2];
 //Declaration of instance variables
 //Instance midi
@@ -167,51 +167,13 @@ _fifo_enqueue( _instance->id_rawmidi & 0xFF );
 }
 fifo_unlock_and_notify();
 }
-// Enqueue of messages MidiParser::midi::note_on
-void enqueue_MidiParser_send_midi_note_on(struct MidiParser_Instance *_instance, uint8_t channel, uint8_t key, uint8_t velocity){
-fifo_lock();
-if ( fifo_byte_available() > 7 ) {
-
-_fifo_enqueue( (12 >> 8) & 0xFF );
-_fifo_enqueue( 12 & 0xFF );
-
-// ID of the source port of the instance
-_fifo_enqueue( (_instance->id_midi >> 8) & 0xFF );
-_fifo_enqueue( _instance->id_midi & 0xFF );
-
-// parameter channel
-union u_channel_t {
-uint8_t p;
-byte bytebuffer[1];
-} u_channel;
-u_channel.p = channel;
-_fifo_enqueue(u_channel.bytebuffer[0] & 0xFF );
-
-// parameter key
-union u_key_t {
-uint8_t p;
-byte bytebuffer[1];
-} u_key;
-u_key.p = key;
-_fifo_enqueue(u_key.bytebuffer[0] & 0xFF );
-
-// parameter velocity
-union u_velocity_t {
-uint8_t p;
-byte bytebuffer[1];
-} u_velocity;
-u_velocity.p = velocity;
-_fifo_enqueue(u_velocity.bytebuffer[0] & 0xFF );
-}
-fifo_unlock_and_notify();
-}
 // Enqueue of messages MidiParser::midi::pitch_bend_change
 void enqueue_MidiParser_send_midi_pitch_bend_change(struct MidiParser_Instance *_instance, uint8_t channel, uint16_t vpbend){
 fifo_lock();
 if ( fifo_byte_available() > 7 ) {
 
-_fifo_enqueue( (13 >> 8) & 0xFF );
-_fifo_enqueue( 13 & 0xFF );
+_fifo_enqueue( (12 >> 8) & 0xFF );
+_fifo_enqueue( 12 & 0xFF );
 
 // ID of the source port of the instance
 _fifo_enqueue( (_instance->id_midi >> 8) & 0xFF );
@@ -233,6 +195,44 @@ byte bytebuffer[2];
 u_vpbend.p = vpbend;
 _fifo_enqueue(u_vpbend.bytebuffer[0] & 0xFF );
 _fifo_enqueue(u_vpbend.bytebuffer[1] & 0xFF );
+}
+fifo_unlock_and_notify();
+}
+// Enqueue of messages MidiParser::midi::control_change
+void enqueue_MidiParser_send_midi_control_change(struct MidiParser_Instance *_instance, uint8_t channel, uint8_t ctrl, uint8_t value){
+fifo_lock();
+if ( fifo_byte_available() > 7 ) {
+
+_fifo_enqueue( (13 >> 8) & 0xFF );
+_fifo_enqueue( 13 & 0xFF );
+
+// ID of the source port of the instance
+_fifo_enqueue( (_instance->id_midi >> 8) & 0xFF );
+_fifo_enqueue( _instance->id_midi & 0xFF );
+
+// parameter channel
+union u_channel_t {
+uint8_t p;
+byte bytebuffer[1];
+} u_channel;
+u_channel.p = channel;
+_fifo_enqueue(u_channel.bytebuffer[0] & 0xFF );
+
+// parameter ctrl
+union u_ctrl_t {
+uint8_t p;
+byte bytebuffer[1];
+} u_ctrl;
+u_ctrl.p = ctrl;
+_fifo_enqueue(u_ctrl.bytebuffer[0] & 0xFF );
+
+// parameter value
+union u_value_t {
+uint8_t p;
+byte bytebuffer[1];
+} u_value;
+u_value.p = value;
+_fifo_enqueue(u_value.bytebuffer[0] & 0xFF );
 }
 fifo_unlock_and_notify();
 }
@@ -274,51 +274,13 @@ _fifo_enqueue(u_velocity.bytebuffer[0] & 0xFF );
 }
 fifo_unlock_and_notify();
 }
-// Enqueue of messages MidiParser::midi::control_change
-void enqueue_MidiParser_send_midi_control_change(struct MidiParser_Instance *_instance, uint8_t channel, uint8_t ctrl, uint8_t value){
+// Enqueue of messages MidiParser::midi::note_on
+void enqueue_MidiParser_send_midi_note_on(struct MidiParser_Instance *_instance, uint8_t channel, uint8_t key, uint8_t velocity){
 fifo_lock();
 if ( fifo_byte_available() > 7 ) {
 
 _fifo_enqueue( (15 >> 8) & 0xFF );
 _fifo_enqueue( 15 & 0xFF );
-
-// ID of the source port of the instance
-_fifo_enqueue( (_instance->id_midi >> 8) & 0xFF );
-_fifo_enqueue( _instance->id_midi & 0xFF );
-
-// parameter channel
-union u_channel_t {
-uint8_t p;
-byte bytebuffer[1];
-} u_channel;
-u_channel.p = channel;
-_fifo_enqueue(u_channel.bytebuffer[0] & 0xFF );
-
-// parameter ctrl
-union u_ctrl_t {
-uint8_t p;
-byte bytebuffer[1];
-} u_ctrl;
-u_ctrl.p = ctrl;
-_fifo_enqueue(u_ctrl.bytebuffer[0] & 0xFF );
-
-// parameter value
-union u_value_t {
-uint8_t p;
-byte bytebuffer[1];
-} u_value;
-u_value.p = value;
-_fifo_enqueue(u_value.bytebuffer[0] & 0xFF );
-}
-fifo_unlock_and_notify();
-}
-// Enqueue of messages XTouchExtender::midi::note_on
-void enqueue_XTouchExtender_send_midi_note_on(struct XTouchExtender_Instance *_instance, uint8_t channel, uint8_t key, uint8_t velocity){
-fifo_lock();
-if ( fifo_byte_available() > 7 ) {
-
-_fifo_enqueue( (12 >> 8) & 0xFF );
-_fifo_enqueue( 12 & 0xFF );
 
 // ID of the source port of the instance
 _fifo_enqueue( (_instance->id_midi >> 8) & 0xFF );
@@ -355,8 +317,8 @@ void enqueue_XTouchExtender_send_midi_pitch_bend_change(struct XTouchExtender_In
 fifo_lock();
 if ( fifo_byte_available() > 7 ) {
 
-_fifo_enqueue( (13 >> 8) & 0xFF );
-_fifo_enqueue( 13 & 0xFF );
+_fifo_enqueue( (12 >> 8) & 0xFF );
+_fifo_enqueue( 12 & 0xFF );
 
 // ID of the source port of the instance
 _fifo_enqueue( (_instance->id_midi >> 8) & 0xFF );
@@ -378,6 +340,44 @@ byte bytebuffer[2];
 u_vpbend.p = vpbend;
 _fifo_enqueue(u_vpbend.bytebuffer[0] & 0xFF );
 _fifo_enqueue(u_vpbend.bytebuffer[1] & 0xFF );
+}
+fifo_unlock_and_notify();
+}
+// Enqueue of messages XTouchExtender::midi::control_change
+void enqueue_XTouchExtender_send_midi_control_change(struct XTouchExtender_Instance *_instance, uint8_t channel, uint8_t ctrl, uint8_t value){
+fifo_lock();
+if ( fifo_byte_available() > 7 ) {
+
+_fifo_enqueue( (13 >> 8) & 0xFF );
+_fifo_enqueue( 13 & 0xFF );
+
+// ID of the source port of the instance
+_fifo_enqueue( (_instance->id_midi >> 8) & 0xFF );
+_fifo_enqueue( _instance->id_midi & 0xFF );
+
+// parameter channel
+union u_channel_t {
+uint8_t p;
+byte bytebuffer[1];
+} u_channel;
+u_channel.p = channel;
+_fifo_enqueue(u_channel.bytebuffer[0] & 0xFF );
+
+// parameter ctrl
+union u_ctrl_t {
+uint8_t p;
+byte bytebuffer[1];
+} u_ctrl;
+u_ctrl.p = ctrl;
+_fifo_enqueue(u_ctrl.bytebuffer[0] & 0xFF );
+
+// parameter value
+union u_value_t {
+uint8_t p;
+byte bytebuffer[1];
+} u_value;
+u_value.p = value;
+_fifo_enqueue(u_value.bytebuffer[0] & 0xFF );
 }
 fifo_unlock_and_notify();
 }
@@ -419,8 +419,8 @@ _fifo_enqueue(u_velocity.bytebuffer[0] & 0xFF );
 }
 fifo_unlock_and_notify();
 }
-// Enqueue of messages XTouchExtender::midi::control_change
-void enqueue_XTouchExtender_send_midi_control_change(struct XTouchExtender_Instance *_instance, uint8_t channel, uint8_t ctrl, uint8_t value){
+// Enqueue of messages XTouchExtender::midi::note_on
+void enqueue_XTouchExtender_send_midi_note_on(struct XTouchExtender_Instance *_instance, uint8_t channel, uint8_t key, uint8_t velocity){
 fifo_lock();
 if ( fifo_byte_available() > 7 ) {
 
@@ -439,29 +439,30 @@ byte bytebuffer[1];
 u_channel.p = channel;
 _fifo_enqueue(u_channel.bytebuffer[0] & 0xFF );
 
-// parameter ctrl
-union u_ctrl_t {
+// parameter key
+union u_key_t {
 uint8_t p;
 byte bytebuffer[1];
-} u_ctrl;
-u_ctrl.p = ctrl;
-_fifo_enqueue(u_ctrl.bytebuffer[0] & 0xFF );
+} u_key;
+u_key.p = key;
+_fifo_enqueue(u_key.bytebuffer[0] & 0xFF );
 
-// parameter value
-union u_value_t {
+// parameter velocity
+union u_velocity_t {
 uint8_t p;
 byte bytebuffer[1];
-} u_value;
-u_value.p = value;
-_fifo_enqueue(u_value.bytebuffer[0] & 0xFF );
+} u_velocity;
+u_velocity.p = velocity;
+_fifo_enqueue(u_velocity.bytebuffer[0] & 0xFF );
 }
 fifo_unlock_and_notify();
 }
 
 
 //New dispatcher for messages
-void dispatch_midi_error(uint16_t sender, int param_code) {
-if (sender == midi_var.id_rawmidi) {
+void dispatch_button_light_blink(uint16_t sender, uint8_t param_ch, uint8_t param_id) {
+if (sender == MQTT_instance.listener_id) {
+XTouchExtender_handle_xtouch_button_light_blink(&xtouch_var, param_ch, param_id);
 
 }
 
@@ -469,22 +470,12 @@ if (sender == midi_var.id_rawmidi) {
 
 
 //New dispatcher for messages
-void dispatch_note_off(uint16_t sender, uint8_t param_channel, uint8_t param_key, uint8_t param_velocity) {
-if (sender == xtouch_var.id_midi) {
-MidiParser_handle_midi_note_off(&parser_var, param_channel, param_key, param_velocity);
-
-}
+void dispatch_pitch_bend_change(uint16_t sender, uint8_t param_channel, uint16_t param_vpbend) {
 if (sender == parser_var.id_midi) {
 
 }
-
-}
-
-
-//New dispatcher for messages
-void dispatch_button_light_on(uint16_t sender, uint8_t param_ch, uint8_t param_id) {
-if (sender == MQTT_instance.listener_id) {
-XTouchExtender_handle_xtouch_button_light_on(&xtouch_var, param_ch, param_id);
+if (sender == xtouch_var.id_midi) {
+MidiParser_handle_midi_pitch_bend_change(&parser_var, param_channel, param_vpbend);
 
 }
 
@@ -492,9 +483,8 @@ XTouchExtender_handle_xtouch_button_light_on(&xtouch_var, param_ch, param_id);
 
 
 //New dispatcher for messages
-void dispatch_set_pot(uint16_t sender, uint8_t param_ch, uint8_t param_value) {
-if (sender == MQTT_instance.listener_id) {
-XTouchExtender_handle_xtouch_set_pot(&xtouch_var, param_ch, param_value);
+void dispatch_midi_error(uint16_t sender, int param_code) {
+if (sender == midi_var.id_rawmidi) {
 
 }
 
@@ -512,9 +502,42 @@ XTouchExtender_handle_xtouch_set_meter(&xtouch_var, param_ch, param_value);
 
 
 //New dispatcher for messages
-void dispatch_midi_in(uint16_t sender, uint8_t param_b) {
-if (sender == midi_var.id_rawmidi) {
-MidiParser_handle_rawmidi_midi_in(&parser_var, param_b);
+void dispatch_button_light_off(uint16_t sender, uint8_t param_ch, uint8_t param_id) {
+if (sender == MQTT_instance.listener_id) {
+XTouchExtender_handle_xtouch_button_light_off(&xtouch_var, param_ch, param_id);
+
+}
+
+}
+
+
+//New dispatcher for messages
+void dispatch_note_off(uint16_t sender, uint8_t param_channel, uint8_t param_key, uint8_t param_velocity) {
+if (sender == parser_var.id_midi) {
+
+}
+if (sender == xtouch_var.id_midi) {
+MidiParser_handle_midi_note_off(&parser_var, param_channel, param_key, param_velocity);
+
+}
+
+}
+
+
+//New dispatcher for messages
+void dispatch_button_light_on(uint16_t sender, uint8_t param_ch, uint8_t param_id) {
+if (sender == MQTT_instance.listener_id) {
+XTouchExtender_handle_xtouch_button_light_on(&xtouch_var, param_ch, param_id);
+
+}
+
+}
+
+
+//New dispatcher for messages
+void dispatch_midi_close(uint16_t sender) {
+if (sender == parser_var.id_rawmidi) {
+RawMidi_handle_rawmidi_midi_close(&midi_var);
 
 }
 
@@ -523,35 +546,12 @@ MidiParser_handle_rawmidi_midi_in(&parser_var, param_b);
 
 //New dispatcher for messages
 void dispatch_note_on(uint16_t sender, uint8_t param_channel, uint8_t param_key, uint8_t param_velocity) {
-if (sender == xtouch_var.id_midi) {
-MidiParser_handle_midi_note_on(&parser_var, param_channel, param_key, param_velocity);
-
-}
 if (sender == parser_var.id_midi) {
 XTouchExtender_handle_midi_note_on(&xtouch_var, param_channel, param_key, param_velocity);
 
 }
-
-}
-
-
-//New dispatcher for messages
-void dispatch_midi_out(uint16_t sender, uint8_t param_b) {
-if (sender == parser_var.id_rawmidi) {
-RawMidi_handle_rawmidi_midi_out(&midi_var, param_b);
-
-}
-
-}
-
-
-//New dispatcher for messages
-void dispatch_pitch_bend_change(uint16_t sender, uint8_t param_channel, uint16_t param_vpbend) {
 if (sender == xtouch_var.id_midi) {
-MidiParser_handle_midi_pitch_bend_change(&parser_var, param_channel, param_vpbend);
-
-}
-if (sender == parser_var.id_midi) {
+MidiParser_handle_midi_note_on(&parser_var, param_channel, param_key, param_velocity);
 
 }
 
@@ -569,9 +569,19 @@ XTouchExtender_handle_xtouch_set_slider(&xtouch_var, param_ch, param_value);
 
 
 //New dispatcher for messages
-void dispatch_button_light_blink(uint16_t sender, uint8_t param_ch, uint8_t param_id) {
-if (sender == MQTT_instance.listener_id) {
-XTouchExtender_handle_xtouch_button_light_blink(&xtouch_var, param_ch, param_id);
+void dispatch_midi_in(uint16_t sender, uint8_t param_b) {
+if (sender == midi_var.id_rawmidi) {
+MidiParser_handle_rawmidi_midi_in(&parser_var, param_b);
+
+}
+
+}
+
+
+//New dispatcher for messages
+void dispatch_midi_out(uint16_t sender, uint8_t param_b) {
+if (sender == parser_var.id_rawmidi) {
+RawMidi_handle_rawmidi_midi_out(&midi_var, param_b);
 
 }
 
@@ -580,12 +590,12 @@ XTouchExtender_handle_xtouch_button_light_blink(&xtouch_var, param_ch, param_id)
 
 //New dispatcher for messages
 void dispatch_control_change(uint16_t sender, uint8_t param_channel, uint8_t param_ctrl, uint8_t param_value) {
-if (sender == xtouch_var.id_midi) {
-MidiParser_handle_midi_control_change(&parser_var, param_channel, param_ctrl, param_value);
-
-}
 if (sender == parser_var.id_midi) {
 XTouchExtender_handle_midi_control_change(&xtouch_var, param_channel, param_ctrl, param_value);
+
+}
+if (sender == xtouch_var.id_midi) {
+MidiParser_handle_midi_control_change(&parser_var, param_channel, param_ctrl, param_value);
 
 }
 
@@ -603,19 +613,9 @@ RawMidi_handle_rawmidi_midi_open(&midi_var, param_card, param_dev, param_sub);
 
 
 //New dispatcher for messages
-void dispatch_button_light_off(uint16_t sender, uint8_t param_ch, uint8_t param_id) {
+void dispatch_set_pot(uint16_t sender, uint8_t param_ch, uint8_t param_value) {
 if (sender == MQTT_instance.listener_id) {
-XTouchExtender_handle_xtouch_button_light_off(&xtouch_var, param_ch, param_id);
-
-}
-
-}
-
-
-//New dispatcher for messages
-void dispatch_midi_close(uint16_t sender) {
-if (sender == parser_var.id_rawmidi) {
-RawMidi_handle_rawmidi_midi_close(&midi_var);
+XTouchExtender_handle_xtouch_set_pot(&xtouch_var, param_ch, param_value);
 
 }
 
@@ -634,6 +634,51 @@ code += fifo_dequeue();
 
 // Switch to call the appropriate handler
 switch(code) {
+case 1:{
+byte mbuf[6 - 2];
+while (mbufi < (6 - 2)) mbuf[mbufi++] = fifo_dequeue();
+fifo_unlock();
+uint8_t mbufi_button_light_blink = 2;
+union u_button_light_blink_ch_t {
+uint8_t p;
+byte bytebuffer[1];
+} u_button_light_blink_ch;
+u_button_light_blink_ch.bytebuffer[0] = mbuf[mbufi_button_light_blink + 0];
+mbufi_button_light_blink += 1;
+union u_button_light_blink_id_t {
+uint8_t p;
+byte bytebuffer[1];
+} u_button_light_blink_id;
+u_button_light_blink_id.bytebuffer[0] = mbuf[mbufi_button_light_blink + 0];
+mbufi_button_light_blink += 1;
+dispatch_button_light_blink((mbuf[0] << 8) + mbuf[1] /* instance port*/,
+ u_button_light_blink_ch.p /* ch */ ,
+ u_button_light_blink_id.p /* id */ );
+break;
+}
+case 12:{
+byte mbuf[7 - 2];
+while (mbufi < (7 - 2)) mbuf[mbufi++] = fifo_dequeue();
+fifo_unlock();
+uint8_t mbufi_pitch_bend_change = 2;
+union u_pitch_bend_change_channel_t {
+uint8_t p;
+byte bytebuffer[1];
+} u_pitch_bend_change_channel;
+u_pitch_bend_change_channel.bytebuffer[0] = mbuf[mbufi_pitch_bend_change + 0];
+mbufi_pitch_bend_change += 1;
+union u_pitch_bend_change_vpbend_t {
+uint16_t p;
+byte bytebuffer[2];
+} u_pitch_bend_change_vpbend;
+u_pitch_bend_change_vpbend.bytebuffer[0] = mbuf[mbufi_pitch_bend_change + 0];
+u_pitch_bend_change_vpbend.bytebuffer[1] = mbuf[mbufi_pitch_bend_change + 1];
+mbufi_pitch_bend_change += 2;
+dispatch_pitch_bend_change((mbuf[0] << 8) + mbuf[1] /* instance port*/,
+ u_pitch_bend_change_channel.p /* channel */ ,
+ u_pitch_bend_change_vpbend.p /* vpbend */ );
+break;
+}
 case 7:{
 byte mbuf[6 - 2];
 while (mbufi < (6 - 2)) mbuf[mbufi++] = fifo_dequeue();
@@ -648,6 +693,50 @@ u_midi_error_code.bytebuffer[1] = mbuf[mbufi_midi_error + 1];
 mbufi_midi_error += 2;
 dispatch_midi_error((mbuf[0] << 8) + mbuf[1] /* instance port*/,
  u_midi_error_code.p /* code */ );
+break;
+}
+case 3:{
+byte mbuf[6 - 2];
+while (mbufi < (6 - 2)) mbuf[mbufi++] = fifo_dequeue();
+fifo_unlock();
+uint8_t mbufi_set_meter = 2;
+union u_set_meter_ch_t {
+uint8_t p;
+byte bytebuffer[1];
+} u_set_meter_ch;
+u_set_meter_ch.bytebuffer[0] = mbuf[mbufi_set_meter + 0];
+mbufi_set_meter += 1;
+union u_set_meter_value_t {
+uint8_t p;
+byte bytebuffer[1];
+} u_set_meter_value;
+u_set_meter_value.bytebuffer[0] = mbuf[mbufi_set_meter + 0];
+mbufi_set_meter += 1;
+dispatch_set_meter((mbuf[0] << 8) + mbuf[1] /* instance port*/,
+ u_set_meter_ch.p /* ch */ ,
+ u_set_meter_value.p /* value */ );
+break;
+}
+case 4:{
+byte mbuf[6 - 2];
+while (mbufi < (6 - 2)) mbuf[mbufi++] = fifo_dequeue();
+fifo_unlock();
+uint8_t mbufi_button_light_off = 2;
+union u_button_light_off_ch_t {
+uint8_t p;
+byte bytebuffer[1];
+} u_button_light_off_ch;
+u_button_light_off_ch.bytebuffer[0] = mbuf[mbufi_button_light_off + 0];
+mbufi_button_light_off += 1;
+union u_button_light_off_id_t {
+uint8_t p;
+byte bytebuffer[1];
+} u_button_light_off_id;
+u_button_light_off_id.bytebuffer[0] = mbuf[mbufi_button_light_off + 0];
+mbufi_button_light_off += 1;
+dispatch_button_light_off((mbuf[0] << 8) + mbuf[1] /* instance port*/,
+ u_button_light_off_ch.p /* ch */ ,
+ u_button_light_off_id.p /* id */ );
 break;
 }
 case 14:{
@@ -679,7 +768,7 @@ dispatch_note_off((mbuf[0] << 8) + mbuf[1] /* instance port*/,
  u_note_off_velocity.p /* velocity */ );
 break;
 }
-case 3:{
+case 5:{
 byte mbuf[6 - 2];
 while (mbufi < (6 - 2)) mbuf[mbufi++] = fifo_dequeue();
 fifo_unlock();
@@ -701,66 +790,15 @@ dispatch_button_light_on((mbuf[0] << 8) + mbuf[1] /* instance port*/,
  u_button_light_on_id.p /* id */ );
 break;
 }
-case 4:{
-byte mbuf[6 - 2];
-while (mbufi < (6 - 2)) mbuf[mbufi++] = fifo_dequeue();
+case 11:{
+byte mbuf[4 - 2];
+while (mbufi < (4 - 2)) mbuf[mbufi++] = fifo_dequeue();
 fifo_unlock();
-uint8_t mbufi_set_pot = 2;
-union u_set_pot_ch_t {
-uint8_t p;
-byte bytebuffer[1];
-} u_set_pot_ch;
-u_set_pot_ch.bytebuffer[0] = mbuf[mbufi_set_pot + 0];
-mbufi_set_pot += 1;
-union u_set_pot_value_t {
-uint8_t p;
-byte bytebuffer[1];
-} u_set_pot_value;
-u_set_pot_value.bytebuffer[0] = mbuf[mbufi_set_pot + 0];
-mbufi_set_pot += 1;
-dispatch_set_pot((mbuf[0] << 8) + mbuf[1] /* instance port*/,
- u_set_pot_ch.p /* ch */ ,
- u_set_pot_value.p /* value */ );
+uint8_t mbufi_midi_close = 2;
+dispatch_midi_close((mbuf[0] << 8) + mbuf[1] /* instance port*/);
 break;
 }
-case 5:{
-byte mbuf[6 - 2];
-while (mbufi < (6 - 2)) mbuf[mbufi++] = fifo_dequeue();
-fifo_unlock();
-uint8_t mbufi_set_meter = 2;
-union u_set_meter_ch_t {
-uint8_t p;
-byte bytebuffer[1];
-} u_set_meter_ch;
-u_set_meter_ch.bytebuffer[0] = mbuf[mbufi_set_meter + 0];
-mbufi_set_meter += 1;
-union u_set_meter_value_t {
-uint8_t p;
-byte bytebuffer[1];
-} u_set_meter_value;
-u_set_meter_value.bytebuffer[0] = mbuf[mbufi_set_meter + 0];
-mbufi_set_meter += 1;
-dispatch_set_meter((mbuf[0] << 8) + mbuf[1] /* instance port*/,
- u_set_meter_ch.p /* ch */ ,
- u_set_meter_value.p /* value */ );
-break;
-}
-case 8:{
-byte mbuf[5 - 2];
-while (mbufi < (5 - 2)) mbuf[mbufi++] = fifo_dequeue();
-fifo_unlock();
-uint8_t mbufi_midi_in = 2;
-union u_midi_in_b_t {
-uint8_t p;
-byte bytebuffer[1];
-} u_midi_in_b;
-u_midi_in_b.bytebuffer[0] = mbuf[mbufi_midi_in + 0];
-mbufi_midi_in += 1;
-dispatch_midi_in((mbuf[0] << 8) + mbuf[1] /* instance port*/,
- u_midi_in_b.p /* b */ );
-break;
-}
-case 12:{
+case 15:{
 byte mbuf[7 - 2];
 while (mbufi < (7 - 2)) mbuf[mbufi++] = fifo_dequeue();
 fifo_unlock();
@@ -789,67 +827,7 @@ dispatch_note_on((mbuf[0] << 8) + mbuf[1] /* instance port*/,
  u_note_on_velocity.p /* velocity */ );
 break;
 }
-case 9:{
-byte mbuf[5 - 2];
-while (mbufi < (5 - 2)) mbuf[mbufi++] = fifo_dequeue();
-fifo_unlock();
-uint8_t mbufi_midi_out = 2;
-union u_midi_out_b_t {
-uint8_t p;
-byte bytebuffer[1];
-} u_midi_out_b;
-u_midi_out_b.bytebuffer[0] = mbuf[mbufi_midi_out + 0];
-mbufi_midi_out += 1;
-dispatch_midi_out((mbuf[0] << 8) + mbuf[1] /* instance port*/,
- u_midi_out_b.p /* b */ );
-break;
-}
-case 13:{
-byte mbuf[7 - 2];
-while (mbufi < (7 - 2)) mbuf[mbufi++] = fifo_dequeue();
-fifo_unlock();
-uint8_t mbufi_pitch_bend_change = 2;
-union u_pitch_bend_change_channel_t {
-uint8_t p;
-byte bytebuffer[1];
-} u_pitch_bend_change_channel;
-u_pitch_bend_change_channel.bytebuffer[0] = mbuf[mbufi_pitch_bend_change + 0];
-mbufi_pitch_bend_change += 1;
-union u_pitch_bend_change_vpbend_t {
-uint16_t p;
-byte bytebuffer[2];
-} u_pitch_bend_change_vpbend;
-u_pitch_bend_change_vpbend.bytebuffer[0] = mbuf[mbufi_pitch_bend_change + 0];
-u_pitch_bend_change_vpbend.bytebuffer[1] = mbuf[mbufi_pitch_bend_change + 1];
-mbufi_pitch_bend_change += 2;
-dispatch_pitch_bend_change((mbuf[0] << 8) + mbuf[1] /* instance port*/,
- u_pitch_bend_change_channel.p /* channel */ ,
- u_pitch_bend_change_vpbend.p /* vpbend */ );
-break;
-}
 case 2:{
-byte mbuf[6 - 2];
-while (mbufi < (6 - 2)) mbuf[mbufi++] = fifo_dequeue();
-fifo_unlock();
-uint8_t mbufi_button_light_blink = 2;
-union u_button_light_blink_ch_t {
-uint8_t p;
-byte bytebuffer[1];
-} u_button_light_blink_ch;
-u_button_light_blink_ch.bytebuffer[0] = mbuf[mbufi_button_light_blink + 0];
-mbufi_button_light_blink += 1;
-union u_button_light_blink_id_t {
-uint8_t p;
-byte bytebuffer[1];
-} u_button_light_blink_id;
-u_button_light_blink_id.bytebuffer[0] = mbuf[mbufi_button_light_blink + 0];
-mbufi_button_light_blink += 1;
-dispatch_button_light_blink((mbuf[0] << 8) + mbuf[1] /* instance port*/,
- u_button_light_blink_ch.p /* ch */ ,
- u_button_light_blink_id.p /* id */ );
-break;
-}
-case 1:{
 byte mbuf[7 - 2];
 while (mbufi < (7 - 2)) mbuf[mbufi++] = fifo_dequeue();
 fifo_unlock();
@@ -872,7 +850,37 @@ dispatch_set_slider((mbuf[0] << 8) + mbuf[1] /* instance port*/,
  u_set_slider_value.p /* value */ );
 break;
 }
-case 15:{
+case 8:{
+byte mbuf[5 - 2];
+while (mbufi < (5 - 2)) mbuf[mbufi++] = fifo_dequeue();
+fifo_unlock();
+uint8_t mbufi_midi_in = 2;
+union u_midi_in_b_t {
+uint8_t p;
+byte bytebuffer[1];
+} u_midi_in_b;
+u_midi_in_b.bytebuffer[0] = mbuf[mbufi_midi_in + 0];
+mbufi_midi_in += 1;
+dispatch_midi_in((mbuf[0] << 8) + mbuf[1] /* instance port*/,
+ u_midi_in_b.p /* b */ );
+break;
+}
+case 9:{
+byte mbuf[5 - 2];
+while (mbufi < (5 - 2)) mbuf[mbufi++] = fifo_dequeue();
+fifo_unlock();
+uint8_t mbufi_midi_out = 2;
+union u_midi_out_b_t {
+uint8_t p;
+byte bytebuffer[1];
+} u_midi_out_b;
+u_midi_out_b.bytebuffer[0] = mbuf[mbufi_midi_out + 0];
+mbufi_midi_out += 1;
+dispatch_midi_out((mbuf[0] << 8) + mbuf[1] /* instance port*/,
+ u_midi_out_b.p /* b */ );
+break;
+}
+case 13:{
 byte mbuf[7 - 2];
 while (mbufi < (7 - 2)) mbuf[mbufi++] = fifo_dequeue();
 fifo_unlock();
@@ -934,41 +942,28 @@ case 6:{
 byte mbuf[6 - 2];
 while (mbufi < (6 - 2)) mbuf[mbufi++] = fifo_dequeue();
 fifo_unlock();
-uint8_t mbufi_button_light_off = 2;
-union u_button_light_off_ch_t {
+uint8_t mbufi_set_pot = 2;
+union u_set_pot_ch_t {
 uint8_t p;
 byte bytebuffer[1];
-} u_button_light_off_ch;
-u_button_light_off_ch.bytebuffer[0] = mbuf[mbufi_button_light_off + 0];
-mbufi_button_light_off += 1;
-union u_button_light_off_id_t {
+} u_set_pot_ch;
+u_set_pot_ch.bytebuffer[0] = mbuf[mbufi_set_pot + 0];
+mbufi_set_pot += 1;
+union u_set_pot_value_t {
 uint8_t p;
 byte bytebuffer[1];
-} u_button_light_off_id;
-u_button_light_off_id.bytebuffer[0] = mbuf[mbufi_button_light_off + 0];
-mbufi_button_light_off += 1;
-dispatch_button_light_off((mbuf[0] << 8) + mbuf[1] /* instance port*/,
- u_button_light_off_ch.p /* ch */ ,
- u_button_light_off_id.p /* id */ );
-break;
-}
-case 11:{
-byte mbuf[4 - 2];
-while (mbufi < (4 - 2)) mbuf[mbufi++] = fifo_dequeue();
-fifo_unlock();
-uint8_t mbufi_midi_close = 2;
-dispatch_midi_close((mbuf[0] << 8) + mbuf[1] /* instance port*/);
+} u_set_pot_value;
+u_set_pot_value.bytebuffer[0] = mbuf[mbufi_set_pot + 0];
+mbufi_set_pot += 1;
+dispatch_set_pot((mbuf[0] << 8) + mbuf[1] /* instance port*/,
+ u_set_pot_ch.p /* ch */ ,
+ u_set_pot_value.p /* value */ );
 break;
 }
 }
 return 1;
 }
 
-void forward_XTouchExtender_send_xtouch_slider(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t value){
-if(_instance->id_xtouch == xtouch_var.id_xtouch) {
-forward_MQTT_XTouchExtender_send_xtouch_slider(_instance, ch, value);
-}
-}
 void forward_XTouchExtender_send_xtouch_button_press(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t id){
 if(_instance->id_xtouch == xtouch_var.id_xtouch) {
 forward_MQTT_XTouchExtender_send_xtouch_button_press(_instance, ch, id);
@@ -984,22 +979,27 @@ if(_instance->id_xtouch == xtouch_var.id_xtouch) {
 forward_MQTT_XTouchExtender_send_xtouch_pot(_instance, ch, value);
 }
 }
+void forward_XTouchExtender_send_xtouch_slider(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t value){
+if(_instance->id_xtouch == xtouch_var.id_xtouch) {
+forward_MQTT_XTouchExtender_send_xtouch_slider(_instance, ch, value);
+}
+}
 
 //external Message enqueue
 void externalMessageEnqueue(uint8_t * msg, uint8_t msgSize, uint16_t listener_id) {
 if ((msgSize >= 2) && (msg != NULL)) {
 uint8_t msgSizeOK = 0;
 switch(msg[0] * 256 + msg[1]) {
-case 3:
+case 1:
 if(msgSize == 4) {
 msgSizeOK = 1;}
 break;
 case 2:
-if(msgSize == 4) {
+if(msgSize == 5) {
 msgSizeOK = 1;}
 break;
-case 1:
-if(msgSize == 5) {
+case 3:
+if(msgSize == 4) {
 msgSizeOK = 1;}
 break;
 case 4:
@@ -1077,19 +1077,19 @@ parser_var.active = true;
 parser_var.id_rawmidi = add_instance( (void*) &parser_var);
 parser_var.id_midi = add_instance( (void*) &parser_var);
 parser_var.MidiParser_MidiEchoSC_State = MIDIPARSER_MIDIECHOSC_WAITING_STATE;
-parser_var.MidiParser_MidiEchoSC_PBendChange_buf_size_var = 2;
-parser_var.MidiParser_MidiEchoSC_NoteOff_buf_size_var = 2;
+parser_var.MidiParser_MidiEchoSC_NoteOn_buf_size_var = 2;
 parser_var.MidiParser_MidiEchoSC_CtrlChange_buf_size_var = 2;
 parser_var.MidiParser_MidiEchoSC_CtrlChange_idx_var = 0;
-parser_var.MidiParser_MidiEchoSC_NoteOn_buf_size_var = 2;
-parser_var.MidiParser_MidiEchoSC_PBendChange_idx_var = 0;
 parser_var.MidiParser_MidiEchoSC_NoteOff_idx_var = 0;
+parser_var.MidiParser_MidiEchoSC_NoteOff_buf_size_var = 2;
+parser_var.MidiParser_MidiEchoSC_PBendChange_idx_var = 0;
+parser_var.MidiParser_MidiEchoSC_PBendChange_buf_size_var = 2;
 parser_var.MidiParser_MidiEchoSC_NoteOff_buf_var = array_parser_MidiParser_MidiEchoSC_NoteOff_buf_var;
 parser_var.MidiParser_MidiEchoSC_NoteOff_buf_var_size = 2;
-parser_var.MidiParser_MidiEchoSC_PBendChange_buf_var = array_parser_MidiParser_MidiEchoSC_PBendChange_buf_var;
-parser_var.MidiParser_MidiEchoSC_PBendChange_buf_var_size = 2;
 parser_var.MidiParser_MidiEchoSC_NoteOn_buf_var = array_parser_MidiParser_MidiEchoSC_NoteOn_buf_var;
 parser_var.MidiParser_MidiEchoSC_NoteOn_buf_var_size = 2;
+parser_var.MidiParser_MidiEchoSC_PBendChange_buf_var = array_parser_MidiParser_MidiEchoSC_PBendChange_buf_var;
+parser_var.MidiParser_MidiEchoSC_PBendChange_buf_var_size = 2;
 parser_var.MidiParser_MidiEchoSC_CtrlChange_buf_var = array_parser_MidiParser_MidiEchoSC_CtrlChange_buf_var;
 parser_var.MidiParser_MidiEchoSC_CtrlChange_buf_var_size = 2;
 

@@ -1,0 +1,12 @@
+package org.thingml.generated.api;
+
+import org.thingml.generated.api.*;
+
+public interface IXTouchExtenderClient_xtouchClient{
+void button_light_on_from_xtouch(int XTouchExtenderMsgs_button_light_on_ch_var, int XTouchExtenderMsgs_button_light_on_id_var);
+void button_light_off_from_xtouch(int XTouchExtenderMsgs_button_light_off_ch_var, int XTouchExtenderMsgs_button_light_off_id_var);
+void button_light_blink_from_xtouch(int XTouchExtenderMsgs_button_light_blink_ch_var, int XTouchExtenderMsgs_button_light_blink_id_var);
+void set_slider_from_xtouch(int XTouchExtenderMsgs_set_slider_ch_var, int XTouchExtenderMsgs_set_slider_value_var);
+void set_pot_from_xtouch(int XTouchExtenderMsgs_set_pot_ch_var, int XTouchExtenderMsgs_set_pot_value_var);
+void set_meter_from_xtouch(int XTouchExtenderMsgs_set_meter_ch_var, int XTouchExtenderMsgs_set_meter_value_var);
+}

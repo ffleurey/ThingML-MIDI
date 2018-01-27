@@ -132,20 +132,20 @@ thing MidiParser includes RawMidiMsgs , MidiMsgs {
 		state Waiting {
 			transition -> NoteOn
 			event e : rawmidi?midi_in
-			guard '(0xF0 & ' & e.b & ') == 0x90'
-			action channel = '(0x0F & ' & e.b & ')'
+			guard `(0xF0 & ` & e.b & `) == 0x90`
+			action channel = `(0x0F & ` & e.b & `)`
 			transition -> NoteOff
 			event e : rawmidi?midi_in
-			guard '(0xF0 & ' & e.b & ') == 0x80'
-			action channel = '(0x0F & ' & e.b & ')'
+			guard `(0xF0 & ` & e.b & `) == 0x80`
+			action channel = `(0x0F & ` & e.b & `)`
 			transition -> PBendChange
 			event e : rawmidi?midi_in
-			guard '(0xF0 & ' & e.b & ') == 0xE0'
-			action channel = '(0x0F & ' & e.b & ')'
+			guard `(0xF0 & ` & e.b & `) == 0xE0`
+			action channel = `(0x0F & ` & e.b & `)`
 			transition -> CtrlChange
 			event e : rawmidi?midi_in
-			guard '(0xF0 & ' & e.b & ') == 0xB0'
-			action channel = '(0x0F & ' & e.b & ')'
+			guard `(0xF0 & ` & e.b & `) == 0xB0`
+			action channel = `(0x0F & ` & e.b & `)`
 		}
 		state NoteOn {
 			readonly property buf_size : UInt8 = 2
@@ -225,7 +225,7 @@ thing MidiParser includes RawMidiMsgs , MidiMsgs {
 			action do
 				buf[idx] = e.b
 				var v : UInt16 = buf [1]
-				v = '' & v & '<<7'
+				v = `` & v & `<<7`
 				v = v + buf [0]
 				midi!pitch_bend_change(channel, v)
 			end
@@ -233,30 +233,30 @@ thing MidiParser includes RawMidiMsgs , MidiMsgs {
 		internal
 		event e : midi?note_on
 		action do
-			rawmidi!midi_out('0x90' + e.channel)
+			rawmidi!midi_out(`0x90` + e.channel)
 			rawmidi!midi_out(e.key)
 			rawmidi!midi_out(e.velocity)
 		end
 		internal
 		event e : midi?note_off
 		action do
-			rawmidi!midi_out('0x80' + e.channel)
+			rawmidi!midi_out(`0x80` + e.channel)
 			rawmidi!midi_out(e.key)
 			rawmidi!midi_out(e.velocity)
 		end
 		internal
 		event e : midi?control_change
 		action do
-			rawmidi!midi_out('0xB0' + e.channel)
+			rawmidi!midi_out(`0xB0` + e.channel)
 			rawmidi!midi_out(e.ctrl)
 			rawmidi!midi_out(e.value)
 		end
 		internal
 		event e : midi?pitch_bend_change
 		action do
-			rawmidi!midi_out('0xE0' + e.channel)
-			var b1 : UInt8 = '' & e.vpbend & ' & 0x007F'
-			var b2 : UInt8 = '' & e.vpbend & ' >> 7'
+			rawmidi!midi_out(`0xE0` + e.channel)
+			var b1 : UInt8 = `` & e.vpbend & ` & 0x007F`
+			var b2 : UInt8 = `` & e.vpbend & ` >> 7`
 			rawmidi!midi_out(b1)
 			rawmidi!midi_out(b2)
 		end
@@ -285,71 +285,71 @@ void errormessage(const char *format, ...) {
 	}
 	property connected : Boolean = false
 	function start_read_thread() @fork_linux_thread "true" do
-		'char buffer[1];        // Storage for input buffer received
+		`char buffer[1];        // Storage for input buffer received
 	   int status;
-	   while (' & connected & ') {
+	   while (` & connected & `) {
 	      if ((status = snd_rawmidi_read(midiin, buffer, 1)) < 0) {
 	         errormessage("Problem reading MIDI input: %s", snd_strerror(status));
 	         exit(1);
-	      }'
-		rawmidi!midi_in('buffer[0]' as UInt8)
-	'}'
+	      }`
+		rawmidi!midi_in(`buffer[0]` as UInt8)
+	`}`
 		close()
 	end
 	function connect(card : UInt8, dev : UInt8, sub : UInt8) : Boolean do
-	'const char* portname = "hw:1,0,0";
+	`const char* portname = "hw:1,0,0";
 	   int status;
 	   int mode = SND_RAWMIDI_SYNC;
 	
 	   if ((status = snd_rawmidi_open(&midiin, &midiout, portname, mode)) < 0) {
-	      errormessage("Problem opening MIDI input: %s", snd_strerror(status));'
+	      errormessage("Problem opening MIDI input: %s", snd_strerror(status));`
 		connected = false
-		rawmidi!midi_error('status' as Integer)
-	'exit(1);
-	   }'
+		rawmidi!midi_error(`status` as Integer)
+	`exit(1);
+	   }`
 		connected = true
 		start_read_thread()
 		return connected
 	end
 	function close() do
-	'snd_rawmidi_close(midiin);
+	`snd_rawmidi_close(midiin);
      snd_rawmidi_close(midiout);
      midiin  = NULL;    // snd_rawmidi_close() does not clear invalid pointer,
-     midiout = NULL;    // so might be a good idea to erase it after closing.'
+     midiout = NULL;    // so might be a good idea to erase it after closing.`
 	end
 	function sendByte(b : UInt8) do
-	'char buffer[1];'
-		'buffer[0] = ' & b & ';'
-	'int status;'
-	'if ((status = snd_rawmidi_write(midiout, buffer, 1)) < 0) {
-     	errormessage("Problem writing to MIDI output: %s\n", snd_strerror(status));'
-		rawmidi!midi_error('status' as Integer)
-	'exit(1);
-     }'
+	`char buffer[1];`
+		`buffer[0] = ` & b & `;`
+	`int status;`
+	`if ((status = snd_rawmidi_write(midiout, buffer, 1)) < 0) {
+     	errormessage("Problem writing to MIDI output: %s\n", snd_strerror(status));`
+		rawmidi!midi_error(`status` as Integer)
+	`exit(1);
+     }`
 	end
 	function sendNoteOn(channel : UInt8, key : UInt8, velocity : UInt8) do
-	'char buffer[3];'
-		'buffer[0] = 0x90 | ' & channel & ';'
-		'buffer[1] = ' & key & ';'
-		'buffer[2] = ' & velocity & ';'
-	'int status;'
-	'if ((status = snd_rawmidi_write(midiout, buffer, 3)) < 0) {
-     	errormessage("Problem writing to MIDI output: %s", snd_strerror(status));'
-		rawmidi!midi_error('status' as Integer)
-	'exit(1);
-     }'
+	`char buffer[3];`
+		`buffer[0] = 0x90 | ` & channel & `;`
+		`buffer[1] = ` & key & `;`
+		`buffer[2] = ` & velocity & `;`
+	`int status;`
+	`if ((status = snd_rawmidi_write(midiout, buffer, 3)) < 0) {
+     	errormessage("Problem writing to MIDI output: %s", snd_strerror(status));`
+		rawmidi!midi_error(`status` as Integer)
+	`exit(1);
+     }`
 	end
 	function sendNoteOff(channel : UInt8, key : UInt8, velocity : UInt8) do
-	'char buffer[3];'
-		'buffer[0] = 0x80 | ' & channel & ';'
-		'buffer[1] = ' & key & ';'
-		'buffer[2] = ' & velocity & ';'
-	'int status;'
-	'if ((status = snd_rawmidi_write(midiout, buffer, 3)) < 0) {
-     	errormessage("Problem writing to MIDI output: %s", snd_strerror(status));'
-		rawmidi!midi_error('status' as Integer)
-	'exit(1);
-     }'
+	`char buffer[3];`
+		`buffer[0] = 0x80 | ` & channel & `;`
+		`buffer[1] = ` & key & `;`
+		`buffer[2] = ` & velocity & `;`
+	`int status;`
+	`if ((status = snd_rawmidi_write(midiout, buffer, 3)) < 0) {
+     	errormessage("Problem writing to MIDI output: %s", snd_strerror(status));`
+		rawmidi!midi_error(`status` as Integer)
+	`exit(1);
+     }`
 	end
 	statechart RawMidiSC init Disconnected {
 		state Disconnected {

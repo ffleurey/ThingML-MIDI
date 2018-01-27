@@ -11,12 +11,12 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<jasm.version>1.1.0</jasm.version>
-		<!--PROP -->
+		<!--PROP-->
 	</properties>
 
 	<repositories>
-		<!--Additional repositories -->
-		<!--REPO -->
+		<!--Additional repositories-->
+		<!--REPO-->
 	</repositories>
 
 
@@ -28,8 +28,18 @@
 			<version>${jasm.version}</version>
 		</dependency>
 
-		<!--Additional dependencies -->
-		<!--DEP -->
+		<!--Additional dependencies-->
+		<dependency>
+    <groupId>org.fusesource.mqtt-client</groupId>
+    <artifactId>mqtt-client</artifactId>
+    <version>1.12</version>
+</dependency>
+<dependency>
+<groupId>com.eclipsesource.minimal-json</groupId>
+<artifactId>minimal-json</artifactId>
+<version>0.9.4</version>
+</dependency>
+<!--DEP-->
 	</dependencies>
 
 
@@ -61,7 +71,7 @@
 					<mainClass>org.thingml.generated.Main</mainClass>
 				</configuration>
 			</plugin>
-			<!-- PLUGIN -->
+			<!-- PLUGIN-->
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<configuration>
@@ -89,7 +99,7 @@
 		</plugins>
 	</build>
 
-	<!--ROOT -->
+	<!--ROOT-->
 
 </project>
 

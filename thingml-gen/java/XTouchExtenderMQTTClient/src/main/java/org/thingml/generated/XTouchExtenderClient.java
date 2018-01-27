@@ -137,25 +137,25 @@ state_XTouchExtenderClient_XTouchExtenderTestSC_Running.onEntry(()->{
 select_bank();
 send_slider_values();
 });
-Handler h1444498032 = new Handler();
-h1444498032.from(state_XTouchExtenderClient_XTouchExtenderTestSC_Running);
-h1444498032.event(sliderType);
-h1444498032.port(xtouch_port);
-h1444498032.action((Event e)->{
+Handler h344967297 = new Handler();
+h344967297.from(state_XTouchExtenderClient_XTouchExtenderTestSC_Running);
+h344967297.event(sliderType);
+h344967297.port(xtouch_port);
+h344967297.action((Event e)->{
 final SliderMessageType.SliderMessage slider = (SliderMessageType.SliderMessage) e;
 XTouchExtenderClient_slider_values_var[8 * getXTouchExtenderClient_current_bank_var() + slider.ch] = (int) (slider.value);
 });
 
-Transition h23235446 = new Transition();
-h23235446.from(state_XTouchExtenderClient_XTouchExtenderTestSC_Running).to(state_XTouchExtenderClient_XTouchExtenderTestSC_Running);
-h23235446.event(button_pressType);
-h23235446.guard((Event e)->{
+Transition h1178306139 = new Transition();
+h1178306139.from(state_XTouchExtenderClient_XTouchExtenderTestSC_Running).to(state_XTouchExtenderClient_XTouchExtenderTestSC_Running);
+h1178306139.event(button_pressType);
+h1178306139.guard((Event e)->{
 final Button_pressMessageType.Button_pressMessage button_press = (Button_pressMessageType.Button_pressMessage) e;
 return button_press.ch < 4 && button_press.id == 1;
 });
 
-h23235446.port(xtouch_port);
-h23235446.action((Event e)->{
+h1178306139.port(xtouch_port);
+h1178306139.action((Event e)->{
 final Button_pressMessageType.Button_pressMessage button_press = (Button_pressMessageType.Button_pressMessage) e;
 XTouchExtenderClient_current_bank_var = (int) (button_press.ch);
 });

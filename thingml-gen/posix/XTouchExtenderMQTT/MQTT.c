@@ -585,7 +585,7 @@ void MQTT_send_message(uint8_t *msg, int msglen, int topic)
     int ret;
     if (topic < 3) {
         //printf("[MQTT] Sending message (%i bytes) on topic %s\n", msglen, MQTT_topics[topic]);
-        ret = mosquitto_publish(MQTT_mosq, NULL, MQTT_topics[topic], msglen, msg, MQTT_qos, false);
+        ret = mosquitto_publish(MQTT_mosq, NULL, MQTT_topics[topic], msglen-1, msg, MQTT_qos, false);
         if (ret) {
             fprintf(stderr, "[MQTT] mosquitto_publish failed for %s : %s\n", MQTT_topics[topic], mosquitto_strerror(ret));
             exit(1); // Exit in case of error

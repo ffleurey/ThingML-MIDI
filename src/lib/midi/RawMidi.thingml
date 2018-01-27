@@ -64,7 +64,7 @@ void errormessage(const char *format, ...) {
 	  end
 
   function connect(card : UInt8, dev : UInt8, sub : UInt8) : Boolean do
-	  'const char* portname = "hw:2,0,0";
+	  'const char* portname = "hw:1,0,0";
 	   int status;
 	   int mode = SND_RAWMIDI_SYNC;
 	

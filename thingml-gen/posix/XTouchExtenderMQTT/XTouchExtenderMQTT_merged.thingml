@@ -1,0 +1,487 @@
+thing fragment XTouchExtenderMsgs {
+	message slider(ch : UInt8, value : UInt8)
+	message pot(ch : UInt8, value : UInt8)
+	message set_slider(ch : UInt8, value : UInt16)
+	message set_pot(ch : UInt8, value : UInt8)
+	message set_meter(ch : UInt8, value : UInt8)
+	message button_press(ch : UInt8, id : UInt8)
+	message button_release(ch : UInt8, id : UInt8)
+	message button_light_on(ch : UInt8, id : UInt8)
+	message button_light_off(ch : UInt8, id : UInt8)
+	message button_light_blink(ch : UInt8, id : UInt8)
+}
+thing XTouchExtender includes XTouchExtenderMsgs , MidiMsgs {
+	required port midi {
+		sends note_on sends note_off sends pitch_bend_change sends control_change receives note_on receives note_off receives pitch_bend_change receives control_change
+	}
+	provided port xtouch {
+		sends slider sends pot sends button_press sends button_release receives button_light_on receives button_light_off receives button_light_blink receives set_slider receives set_pot receives set_meter
+	}
+	statechart XTouchExtenderSC init Running {
+		state Running {
+			internal
+			event e : midi?note_on
+			action do
+				print "[->] NOTE ON \t\tchannel:"
+				print e.channel
+				print " \tkey:"
+				print e.key
+				print " \tvelocity:"
+				print e.velocity
+				print "\n"
+				if (e.key >= 110 and e.key < 118) do
+					if (e.velocity == 0) xtouch!button_press(e.key - 110, 0)
+					else xtouch!button_release(e.key - 110, 0)
+				end
+				else if (e.key >= 32 and e.key < 40) do
+					if (e.velocity == 0) xtouch!button_press(e.key - 32, 1)
+					else xtouch!button_release(e.key - 32, 1)
+				end
+				else if (e.key >= 24 and e.key < 32) do
+					if (e.velocity == 0) xtouch!button_press(e.key - 24, 2)
+					else xtouch!button_release(e.key - 24, 2)
+				end
+				else if (e.key >= 16 and e.key < 24) do
+					if (e.velocity == 0) xtouch!button_press(e.key - 16, 3)
+					else xtouch!button_release(e.key - 16, 3)
+				end
+				else if (e.key >= 8 and e.key < 16) do
+					if (e.velocity == 0) xtouch!button_press(e.key - 8, 4)
+					else xtouch!button_release(e.key - 8, 4)
+				end
+				else if (e.key >= 0 and e.key < 8) do
+					if (e.velocity == 0) xtouch!button_press(e.key, 5)
+					else xtouch!button_release(e.key, 5)
+				end
+			end
+			internal
+			event e : midi?control_change
+			action do
+				print "[->] CONTROL CHG \tchannel:"
+				print e.channel
+				print " \tcontrol:"
+				print e.ctrl
+				print " \tvelocity:"
+				print e.value
+				print "\n"
+				if (e.ctrl >= 70 and e.ctrl < 78) do
+					xtouch!slider(e.ctrl - 70, e.value)
+				end
+				else if (e.ctrl >= 80 and e.ctrl < 88) do
+					xtouch!pot(e.ctrl - 80, e.value)
+				end
+			end
+			internal
+			event e : xtouch?set_slider
+			action do
+				midi!control_change(0, 70 + e.ch, e.value)
+			end
+			internal
+			event e : xtouch?set_pot
+			action do
+				midi!control_change(0, 80 + e.ch, e.value)
+			end
+			internal
+			event e : xtouch?set_meter
+			action do
+				midi!control_change(0, 90 + e.ch, e.value)
+			end
+			internal
+			event e : xtouch?button_light_off
+			action do
+				if (e.id == 1) midi!note_on(0, e.ch + 32, 0)
+				if (e.id == 2) midi!note_on(0, e.ch + 24, 0)
+				if (e.id == 3) midi!note_on(0, e.ch + 16, 0)
+				if (e.id == 4) midi!note_on(0, e.ch + 8, 0)
+			end
+			internal
+			event e : xtouch?button_light_blink
+			action do
+				if (e.id == 1) midi!note_on(0, e.ch + 32, 64)
+				if (e.id == 2) midi!note_on(0, e.ch + 24, 64)
+				if (e.id == 3) midi!note_on(0, e.ch + 16, 64)
+				if (e.id == 4) midi!note_on(0, e.ch + 8, 64)
+			end
+			internal
+			event e : xtouch?button_light_on
+			action do
+				if (e.id == 1) midi!note_on(0, e.ch + 32, 127)
+				if (e.id == 2) midi!note_on(0, e.ch + 24, 127)
+				if (e.id == 3) midi!note_on(0, e.ch + 16, 127)
+				if (e.id == 4) midi!note_on(0, e.ch + 8, 127)
+			end
+		}
+	}
+}
+thing fragment MidiMsgs {
+	message note_on(channel : UInt8, key : UInt8, velocity : UInt8)
+	message note_off(channel : UInt8, key : UInt8, velocity : UInt8)
+	message pitch_bend_change(channel : UInt8, vpbend : UInt16)
+	message control_change(channel : UInt8, ctrl : UInt8, value : UInt8)
+}
+thing MidiParser includes RawMidiMsgs , MidiMsgs {
+	required port rawmidi {
+		sends midi_open sends midi_close sends midi_out receives midi_in receives midi_error
+	}
+	provided port midi {
+		sends note_on sends note_off sends pitch_bend_change sends control_change receives note_on receives note_off receives pitch_bend_change receives control_change
+	}
+	statechart MidiEchoSC init Waiting {
+		property channel : UInt8
+		on entry rawmidi!midi_open(2, 0, 0)
+		state Waiting {
+			transition -> NoteOn
+			event e : rawmidi?midi_in
+			guard '(0xF0 & ' & e.b & ') == 0x90'
+			action channel = '(0x0F & ' & e.b & ')'
+			transition -> NoteOff
+			event e : rawmidi?midi_in
+			guard '(0xF0 & ' & e.b & ') == 0x80'
+			action channel = '(0x0F & ' & e.b & ')'
+			transition -> PBendChange
+			event e : rawmidi?midi_in
+			guard '(0xF0 & ' & e.b & ') == 0xE0'
+			action channel = '(0x0F & ' & e.b & ')'
+			transition -> CtrlChange
+			event e : rawmidi?midi_in
+			guard '(0xF0 & ' & e.b & ') == 0xB0'
+			action channel = '(0x0F & ' & e.b & ')'
+		}
+		state NoteOn {
+			readonly property buf_size : UInt8 = 2
+			property buf : UInt8 [ buf_size ]
+			property idx : Int8
+			on entry idx = 0
+			internal
+			event e : rawmidi?midi_in
+			guard idx < buf_size - 1
+			action do
+				buf[idx] = e.b
+				idx = idx + 1
+			end
+			transition -> Waiting
+			event e : rawmidi?midi_in
+			guard idx == buf_size - 1
+			action do
+				buf[idx] = e.b
+				midi!note_on(channel, buf [0], buf [1])
+			end
+		}
+		state NoteOff {
+			readonly property buf_size : UInt8 = 2
+			property buf : UInt8 [ buf_size ]
+			property idx : Int8 = 0
+			on entry idx = 0
+			internal
+			event e : rawmidi?midi_in
+			guard idx < buf_size - 1
+			action do
+				buf[idx] = e.b
+				idx = idx + 1
+			end
+			transition -> Waiting
+			event e : rawmidi?midi_in
+			guard idx == buf_size - 1
+			action do
+				buf[idx] = e.b
+				midi!note_off(channel, buf [0], buf [1])
+			end
+		}
+		state CtrlChange {
+			readonly property buf_size : UInt8 = 2
+			property buf : UInt8 [ buf_size ]
+			property idx : Int8 = 0
+			on entry idx = 0
+			internal
+			event e : rawmidi?midi_in
+			guard idx < buf_size - 1
+			action do
+				buf[idx] = e.b
+				idx = idx + 1
+			end
+			transition -> Waiting
+			event e : rawmidi?midi_in
+			guard idx == buf_size - 1
+			action do
+				buf[idx] = e.b
+				midi!control_change(channel, buf [0], buf [1])
+			end
+		}
+		state PBendChange {
+			readonly property buf_size : UInt8 = 2
+			property buf : UInt8 [ buf_size ]
+			property idx : Int8 = 0
+			on entry idx = 0
+			internal
+			event e : rawmidi?midi_in
+			guard idx < buf_size - 1
+			action do
+				buf[idx] = e.b
+				idx = idx + 1
+			end
+			transition -> Waiting
+			event e : rawmidi?midi_in
+			guard idx == buf_size - 1
+			action do
+				buf[idx] = e.b
+				var v : UInt16 = buf [1]
+				v = '' & v & '<<7'
+				v = v + buf [0]
+				midi!pitch_bend_change(channel, v)
+			end
+		}
+		internal
+		event e : midi?note_on
+		action do
+			rawmidi!midi_out('0x90' + e.channel)
+			rawmidi!midi_out(e.key)
+			rawmidi!midi_out(e.velocity)
+		end
+		internal
+		event e : midi?note_off
+		action do
+			rawmidi!midi_out('0x80' + e.channel)
+			rawmidi!midi_out(e.key)
+			rawmidi!midi_out(e.velocity)
+		end
+		internal
+		event e : midi?control_change
+		action do
+			rawmidi!midi_out('0xB0' + e.channel)
+			rawmidi!midi_out(e.ctrl)
+			rawmidi!midi_out(e.value)
+		end
+		internal
+		event e : midi?pitch_bend_change
+		action do
+			rawmidi!midi_out('0xE0' + e.channel)
+			var b1 : UInt8 = '' & e.vpbend & ' & 0x007F'
+			var b2 : UInt8 = '' & e.vpbend & ' >> 7'
+			rawmidi!midi_out(b1)
+			rawmidi!midi_out(b2)
+		end
+	}
+}
+thing fragment RawMidiMsgs {
+	message midi_open(card : UInt8, dev : UInt8, sub : UInt8)
+	message midi_close()
+	message midi_error(code : Integer)
+	message midi_in(b : UInt8)
+	message midi_out(b : UInt8)
+}
+thing RawMidi includes RawMidiMsgs @c_header "#include <alsa/asoundlib.h>" @c_header "void errormessage(const char *format, ...);" @c_global "
+snd_rawmidi_t* midiin  = NULL;      // structure to access MIDI input
+snd_rawmidi_t* midiout = NULL;      // structure to access MIDI output
+
+void errormessage(const char *format, ...) {
+   va_list ap;
+   va_start(ap, format);
+   vfprintf(stderr, format, ap);
+   va_end(ap);
+   putc('\n', stderr);
+}" {
+	provided port rawmidi {
+		sends midi_in sends midi_error receives midi_open receives midi_close receives midi_out
+	}
+	property connected : Boolean = false
+	function start_read_thread() @fork_linux_thread "true" do
+		'char buffer[1];        // Storage for input buffer received
+	   int status;
+	   while (' & connected & ') {
+	      if ((status = snd_rawmidi_read(midiin, buffer, 1)) < 0) {
+	         errormessage("Problem reading MIDI input: %s", snd_strerror(status));
+	         exit(1);
+	      }'
+		rawmidi!midi_in('buffer[0]' as UInt8)
+	'}'
+		close()
+	end
+	function connect(card : UInt8, dev : UInt8, sub : UInt8) : Boolean do
+	'const char* portname = "hw:1,0,0";
+	   int status;
+	   int mode = SND_RAWMIDI_SYNC;
+	
+	   if ((status = snd_rawmidi_open(&midiin, &midiout, portname, mode)) < 0) {
+	      errormessage("Problem opening MIDI input: %s", snd_strerror(status));'
+		connected = false
+		rawmidi!midi_error('status' as Integer)
+	'exit(1);
+	   }'
+		connected = true
+		start_read_thread()
+		return connected
+	end
+	function close() do
+	'snd_rawmidi_close(midiin);
+     snd_rawmidi_close(midiout);
+     midiin  = NULL;    // snd_rawmidi_close() does not clear invalid pointer,
+     midiout = NULL;    // so might be a good idea to erase it after closing.'
+	end
+	function sendByte(b : UInt8) do
+	'char buffer[1];'
+		'buffer[0] = ' & b & ';'
+	'int status;'
+	'if ((status = snd_rawmidi_write(midiout, buffer, 1)) < 0) {
+     	errormessage("Problem writing to MIDI output: %s\n", snd_strerror(status));'
+		rawmidi!midi_error('status' as Integer)
+	'exit(1);
+     }'
+	end
+	function sendNoteOn(channel : UInt8, key : UInt8, velocity : UInt8) do
+	'char buffer[3];'
+		'buffer[0] = 0x90 | ' & channel & ';'
+		'buffer[1] = ' & key & ';'
+		'buffer[2] = ' & velocity & ';'
+	'int status;'
+	'if ((status = snd_rawmidi_write(midiout, buffer, 3)) < 0) {
+     	errormessage("Problem writing to MIDI output: %s", snd_strerror(status));'
+		rawmidi!midi_error('status' as Integer)
+	'exit(1);
+     }'
+	end
+	function sendNoteOff(channel : UInt8, key : UInt8, velocity : UInt8) do
+	'char buffer[3];'
+		'buffer[0] = 0x80 | ' & channel & ';'
+		'buffer[1] = ' & key & ';'
+		'buffer[2] = ' & velocity & ';'
+	'int status;'
+	'if ((status = snd_rawmidi_write(midiout, buffer, 3)) < 0) {
+     	errormessage("Problem writing to MIDI output: %s", snd_strerror(status));'
+		rawmidi!midi_error('status' as Integer)
+	'exit(1);
+     }'
+	end
+	statechart RawMidiSC init Disconnected {
+		state Disconnected {
+			transition -> Connected
+			event e : rawmidi?midi_open
+			action do
+				connect(e.card, e.dev, e.sub)
+			end
+		}
+		state Connected {
+			internal
+			event e : rawmidi?midi_out
+			action do
+				sendByte(e.b)
+			end
+			transition -> Disconnected
+			event rawmidi?midi_close
+			action do
+				connected = false
+			end
+		}
+	}
+}
+datatype Byte<1>
+	@type_checker "Integer"
+	@c_type "uint8_t"
+	@java_type "byte"
+	@java_primitive "true"
+datatype Boolean<1>
+	@type_checker "Boolean"
+	@c_type "uint8_t"
+	@java_type "boolean"
+	@java_primitive "true"
+datatype Integer<2>
+	@type_checker "Integer"
+	@c_type "int"
+	@java_type "int"
+	@java_primitive "true"
+datatype UInt8<1>
+	@type_checker "Integer"
+	@c_type "uint8_t"
+	@java_type "int"
+	@java_primitive "true"
+datatype Int8<1>
+	@type_checker "Integer"
+	@c_type "int8_t"
+	@java_type "int"
+	@java_primitive "true"
+datatype UInt16<2>
+	@type_checker "Integer"
+	@c_type "uint16_t"
+	@java_type "int"
+	@java_primitive "true"
+datatype Int16<2>
+	@type_checker "Integer"
+	@c_type "int16_t"
+	@java_type "int"
+	@java_primitive "true"
+datatype UInt32<4>
+	@type_checker "Integer"
+	@c_type "uint32_t"
+	@java_type "int"
+	@java_primitive "true"
+datatype Int32<4>
+	@type_checker "Integer"
+	@c_type "int32_t"
+	@java_type "int"
+	@java_primitive "true"
+datatype UInt64<8>
+	@type_checker "Integer"
+	@c_type "uint64_t"
+	@java_type "long"
+	@java_primitive "true"
+datatype Int64<8>
+	@type_checker "Integer"
+	@c_type "int64_t"
+	@java_type "long"
+	@java_primitive "true"
+datatype Long<4>
+	@type_checker "Integer"
+	@c_type "long"
+	@java_type "int"
+	@java_primitive "true"
+datatype ULong<4>
+	@type_checker "Integer"
+	@c_type "unsigned long"
+	@java_type "int"
+	@java_primitive "true"
+datatype Double<4>
+	@type_checker "Real"
+	@c_type "double"
+	@java_type "float"
+	@java_primitive "true"
+datatype Char<1>
+	@type_checker "String"
+	@c_type "char"
+	@java_type "char"
+	@js_type "char"
+	@java_primitive "true"
+object String
+	@type_checker "String"
+	@c_type "char *"
+	@c_byte_size "*"
+	@java_type "String"
+	@js_type "String"
+enumeration DigitalState
+	@type_checker "Integer"
+	@java_type "byte"
+	@java_primitive "true"
+	@c_byte_size "1"
+	@c_type "uint8_t"
+	{
+	LOW @enum_val "0"
+	HIGH @enum_val "1"
+}
+datatype LongLong<8>
+	@type_checker "Integer"
+	@c_type "long long"
+	@java_type "long"
+	@java_primitive "true"
+protocol MQTT
+	@serializer "JSON"
+	@mqtt_broker_address "192.168.8.5"
+	@mqtt_publish_topic "sh/xtouch/state"
+	@mqtt_subscribe_topic "sh/xtouch/cmd"
+	@trace_level "1" ;
+
+configuration XTouchExtenderMQTT @add_c_libraries "asound" {
+	instance midi : RawMidi
+	instance parser : MidiParser
+	instance xtouch : XTouchExtender
+	connector parser.rawmidi => midi . rawmidi
+	connector xtouch.midi => parser . midi
+	connector xtouch.xtouch over MQTT
+}

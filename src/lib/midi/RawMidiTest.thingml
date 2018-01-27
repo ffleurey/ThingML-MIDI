@@ -1,0 +1,29 @@
+import "RawMidi.thingml"
+
+thing MidiEchoTest includes RawMidiMsgs {
+	
+	required port rawmidi {
+     receives midi_in, midi_error
+     sends midi_open, midi_close, midi_out
+  } 
+	
+	statechart MidiEchoSC init Echo {
+		
+		on entry rawmidi!midi_open(2,0,0)
+		
+		state Echo {
+			internal event e : rawmidi?midi_in action do
+				rawmidi!midi_out(e.b)
+			end
+		}
+	}
+}
+
+configuration MidiEcho 
+@add_c_libraries "asound"
+{
+	instance midi : RawMidi
+	instance test : MidiEchoTest
+	connector test.rawmidi => midi.rawmidi
+}
+

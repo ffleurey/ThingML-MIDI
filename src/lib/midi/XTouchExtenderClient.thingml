@@ -1,0 +1,59 @@
+import "XTouchExtender.thingml"
+
+thing XTouchExtenderClient includes XTouchExtenderMsgs{
+	
+	required port xtouch {
+	  	receives slider, pot, button_press, button_release
+	  	sends button_light_on, button_light_off, button_light_blink, set_slider, set_pot, set_meter
+  	}
+  	
+  	property slider_values : UInt8[32] // 4 times 8 values
+  	property current_bank : UInt8 = 0
+  	
+  	function init_slider_values() do
+  		var i : UInt8 = 0
+		while (i<32) do
+			slider_values[i] = 0
+			i = i+1
+		end
+  	end
+  	
+  	function send_slider_values() do
+  		var i : UInt8 = 0
+		while (i<8) do
+			xtouch!set_slider(i, slider_values[8*current_bank + i])
+			i = i+1
+		end
+  	end
+  	
+  	function select_bank() do
+  		var i : UInt8 = 0
+		while (i<4) do
+			xtouch!button_light_off(i, 1)
+			i = i+1
+		end
+  		xtouch!button_light_on(current_bank, 1)
+  	end
+  	
+  	statechart XTouchExtenderTestSC init Running {
+  		
+  		on entry do
+  			init_slider_values()
+  			current_bank = 0
+  		end
+  		
+  		state Running {
+  			on entry do
+  				select_bank()
+  				send_slider_values()
+  			end 
+  			
+  			internal event e : xtouch?slider action do
+  				slider_values[8*current_bank + e.ch] = e.value 
+  			end
+  			
+  			transition -> Running event e : xtouch?button_press guard e.ch < 4 and e.id == 1 action current_bank = e.ch
+  		}
+  	}
+}
+

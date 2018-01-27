@@ -1,0 +1,21 @@
+import "lib/midi/XTouchExtender.thingml"
+
+protocol MQTT 	@serializer "JSON"
+  				@mqtt_broker_address 	"localhost" 
+  				@mqtt_publish_topic 	"sh/xtouch/state"
+  				@mqtt_subscribe_topic 	"sh/xtouch/cmd"
+  				@trace_level "1";
+
+configuration XTouchExtenderMQTT 
+@add_c_libraries "asound"
+{
+	instance midi : RawMidi
+	instance parser : MidiParser
+	connector parser.rawmidi => midi.rawmidi
+	
+	instance xtouch : XTouchExtender
+	connector xtouch.midi => parser.midi
+	
+	connector xtouch.xtouch over MQTT
+}
+

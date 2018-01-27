@@ -1,0 +1,133 @@
+import "RawMidi.thingml"
+
+
+thing fragment MidiMsgs {
+	
+	// channel  : 4bits 0-15  => MIDI Channel Number 1-16
+	// key		: 7bits 0-127 => Note
+	// velocity : 7bits 0-127 => Velocity
+	// pitch bender : 14bits 0x0000-0x2000-0x3FFF
+	
+	message note_on(channel : UInt8, key : UInt8, velocity : UInt8)
+	message note_off(channel : UInt8, key : UInt8, velocity : UInt8)
+	message pitch_bend_change(channel : UInt8, vpbend : UInt16)
+	message control_change(channel : UInt8, ctrl : UInt8, value : UInt8)
+	
+}
+
+thing MidiParser includes RawMidiMsgs, MidiMsgs {
+	
+  required port rawmidi {
+     receives midi_in, midi_error
+     sends midi_open, midi_close, midi_out
+  }
+  
+  provided port midi {
+  	sends note_on, note_off, pitch_bend_change, control_change
+  	receives note_on, note_off, pitch_bend_change, control_change
+  }
+	
+	statechart MidiEchoSC init Waiting {
+		
+		on entry rawmidi!midi_open(2,0,0)
+		
+		property channel : UInt8
+		
+		internal event e : midi?note_on action do
+			rawmidi!midi_out('0x90' + e.channel)
+			rawmidi!midi_out(e.key)
+			rawmidi!midi_out(e.velocity)
+		end
+		
+		internal event e : midi?note_off action do
+			rawmidi!midi_out('0x80' + e.channel)
+			rawmidi!midi_out(e.key)
+			rawmidi!midi_out(e.velocity)
+		end
+		
+		internal event e : midi?control_change action do
+			rawmidi!midi_out('0xB0' + e.channel)
+			rawmidi!midi_out(e.ctrl)
+			rawmidi!midi_out(e.value)
+		end
+		
+		internal event e : midi?pitch_bend_change action do
+			rawmidi!midi_out('0xE0' + e.channel)
+			var b1 : UInt8 =  ''&e.vpbend&' & 0x007F' 
+			var b2 : UInt8 =  ''&e.vpbend&' >> 7' 
+			rawmidi!midi_out(b1)
+			rawmidi!midi_out(b2)
+		end
+		
+		state Waiting {
+			
+			transition -> NoteOn event e : rawmidi?midi_in 
+				guard '(0xF0 & '&e.b&') == 0x90' action channel = '(0x0F & '&e.b&')'
+			
+			transition -> NoteOff event e : rawmidi?midi_in 
+				guard '(0xF0 & '&e.b&') == 0x80' action channel = '(0x0F & '&e.b&')'
+				
+			transition -> PBendChange event e : rawmidi?midi_in 
+				guard '(0xF0 & '&e.b&') == 0xE0' action channel = '(0x0F & '&e.b&')'
+			
+			transition -> CtrlChange event e : rawmidi?midi_in 
+				guard '(0xF0 & '&e.b&') == 0xB0' action channel = '(0x0F & '&e.b&')'
+			
+		}
+		
+		state NoteOn {
+			readonly property buf_size : UInt8 = 2
+			property buf : UInt8[buf_size]
+			property idx : Int8
+
+			on entry idx = 0			
+			internal event e : rawmidi?midi_in guard idx < buf_size-1 action do buf[idx] = e.b idx = idx + 1 end
+			transition -> Waiting event e : rawmidi?midi_in guard idx == buf_size-1 action do
+				buf[idx] = e.b
+				midi!note_on(channel, buf[0], buf[1])
+			end
+		}
+		
+		state NoteOff {
+			readonly property buf_size : UInt8 = 2
+			property buf : UInt8[buf_size]
+			property idx : Int8 = 0
+			
+			on entry idx = 0	
+			internal event e : rawmidi?midi_in guard idx < buf_size-1 action do buf[idx] = e.b idx = idx + 1 end
+			transition -> Waiting event e : rawmidi?midi_in guard idx == buf_size-1 action do
+				buf[idx] = e.b
+				midi!note_off(channel, buf[0], buf[1])
+			end
+		}
+		
+		state CtrlChange {
+			readonly property buf_size : UInt8 = 2
+			property buf : UInt8[buf_size]
+			property idx : Int8 = 0
+			
+			on entry idx = 0	
+			internal event e : rawmidi?midi_in guard idx < buf_size-1 action do buf[idx] = e.b idx = idx + 1 end
+			transition -> Waiting event e : rawmidi?midi_in guard idx == buf_size-1 action do
+				buf[idx] = e.b
+				midi!control_change(channel, buf[0], buf[1])
+			end
+		}
+		
+		state PBendChange {
+			readonly property buf_size : UInt8 = 2
+			property buf : UInt8[buf_size]
+			property idx : Int8 = 0
+			
+			on entry idx = 0	
+			internal event e : rawmidi?midi_in guard idx < buf_size-1 action do buf[idx] = e.b idx = idx + 1 end
+			transition -> Waiting event e : rawmidi?midi_in guard idx == buf_size-1 action do
+				buf[idx] = e.b
+				var v : UInt16 = buf[1]
+				v = ''&v&'<<7'
+				v = v + buf[0]
+				midi!pitch_bend_change(channel, v)
+			end
+		}
+	}
+}

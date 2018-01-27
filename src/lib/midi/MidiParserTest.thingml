@@ -1,0 +1,49 @@
+import "MidiParser.thingml"
+
+thing MidiParserTest includes RawMidiMsgs, MidiMsgs {
+	
+  required port midi {
+  	 sends note_on, note_off, pitch_bend_change, control_change
+  	 receives note_on, note_off, pitch_bend_change, control_change
+  }
+  
+  statechart MidiParserTestSC init Running {
+  	
+  	state Running {
+  		
+  		internal event e : midi?note_on action do
+  			//'printf("[->NOTE ON] ch:%d, key:%d, vel:%d\n", '&e.channel&', '&e.key&', '&e.velocity&');'
+  			print "[->] NOTE ON \t\tchannel:" print e.channel print " \tkey:" print e.key print " \tvelocity:" print e.velocity print "\n"
+  			midi!note_on(e.channel, e.key, e.velocity)
+  		end
+  		
+  		internal event e : midi?note_off action do
+  			print "[->] NOTE OFF \t\tchannel:" print e.channel print " \tkey:" print e.key print " \tvelocity:" print e.velocity print "\n"
+  			midi!note_off(e.channel, e.key, e.velocity)
+  		end
+  		
+  		internal event e : midi?pitch_bend_change action do
+  			print "[->] PITCH BEND CHG \tchannel:" print e.channel print " \tvalue:" print e.vpbend print "\n"
+  			midi!pitch_bend_change(e.channel, e.vpbend)
+  		end
+  		
+  		internal event e : midi?control_change action do
+  			print "[->] CONTROL CHG \tchannel:" print e.channel print " \tcontrol:" print e.ctrl print " \tvelocity:" print e.value print "\n"
+  			midi!control_change(e.channel, e.ctrl, e.value)
+  		end
+  	}
+  }
+}
+
+
+configuration MidiTest 
+@add_c_libraries "asound"
+{
+	instance midi : RawMidi
+	instance parser : MidiParser
+	connector parser.rawmidi => midi.rawmidi
+	
+	instance test : MidiParserTest
+	connector test.midi => parser.midi
+}
+

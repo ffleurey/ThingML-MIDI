@@ -1,0 +1,149 @@
+import "../_Datatypes.thingml"
+
+thing fragment RawMidiMsgs {
+	
+	message midi_open(card : UInt8, dev : UInt8, sub : UInt8);
+	message midi_close();
+	
+	message midi_error(code : Integer);
+	
+	message midi_in(b : UInt8)
+	message midi_out(b : UInt8)
+	
+}
+
+
+thing RawMidi includes RawMidiMsgs
+@c_header "#include <alsa/asoundlib.h>"		/* Interface to the ALSA system */
+
+@c_header "void errormessage(const char *format, ...);"
+
+@c_global "
+snd_rawmidi_t* midiin  = NULL;      // structure to access MIDI input
+snd_rawmidi_t* midiout = NULL;      // structure to access MIDI output
+
+void errormessage(const char *format, ...) {
+   va_list ap;
+   va_start(ap, format);
+   vfprintf(stderr, format, ap);
+   va_end(ap);
+   putc('\n', stderr);
+}"
+{
+	
+  provided port rawmidi {
+     sends midi_in, midi_error
+     receives midi_open, midi_close, midi_out
+  }
+
+  property connected : Boolean = false
+
+  /* Function to read data from the ALSA midi device */
+  function start_read_thread()
+  @fork_linux_thread "true"
+  do
+	  'char buffer[1];        // Storage for input buffer received
+	   int status;
+	   while ('&connected&') {
+	      if ((status = snd_rawmidi_read(midiin, buffer, 1)) < 0) {
+	         errormessage("Problem reading MIDI input: %s", snd_strerror(status));
+	         exit(1);
+	      }'
+		  rawmidi!midi_in('buffer[0]' as UInt8)
+		  /*
+	      'if ((unsigned char)buffer[0] >= 0x80) {   // command byte: print in hex
+	         printf("\n[MIDI IN] ");
+	         printf("0x%x ", (unsigned char)buffer[0]);
+	      } else {
+	         printf("%d ", (unsigned char)buffer[0]);
+	      }
+	      fflush(stdout);'
+	      */
+	   '}'
+	   close()
+	  end
+
+  function connect(card : UInt8, dev : UInt8, sub : UInt8) : Boolean do
+	  'const char* portname = "hw:2,0,0";
+	   int status;
+	   int mode = SND_RAWMIDI_SYNC;
+	
+	   if ((status = snd_rawmidi_open(&midiin, &midiout, portname, mode)) < 0) {
+	      errormessage("Problem opening MIDI input: %s", snd_strerror(status));'
+	      connected = false
+	      rawmidi!midi_error('status' as Integer)
+	      'exit(1);
+	   }'
+	   connected = true
+	   start_read_thread()
+  	   return connected
+  end
+  
+  function close() do
+  	'snd_rawmidi_close(midiin);
+     snd_rawmidi_close(midiout);
+     midiin  = NULL;    // snd_rawmidi_close() does not clear invalid pointer,
+     midiout = NULL;    // so might be a good idea to erase it after closing.'
+  end
+  
+  function sendByte(b : UInt8) do
+  	'char buffer[1];'
+  	'buffer[0] = '&b&';'
+	 'int status;'
+  	 'if ((status = snd_rawmidi_write(midiout, buffer, 1)) < 0) {
+     	errormessage("Problem writing to MIDI output: %s\n", snd_strerror(status));'
+     	rawmidi!midi_error('status' as Integer)
+     	'exit(1);
+     }'
+  end
+  
+  function sendNoteOn(channel : UInt8, key : UInt8, velocity : UInt8) do
+  	'char buffer[3];'
+  	'buffer[0] = 0x90 | '&channel&';'
+  	'buffer[1] = '&key&';'
+  	'buffer[2] = '&velocity&';'
+	 'int status;'
+  	 'if ((status = snd_rawmidi_write(midiout, buffer, 3)) < 0) {
+     	errormessage("Problem writing to MIDI output: %s", snd_strerror(status));'
+     	rawmidi!midi_error('status' as Integer)
+     	'exit(1);
+     }'
+  end
+  
+  function sendNoteOff(channel : UInt8, key : UInt8, velocity : UInt8) do
+  	'char buffer[3];'
+  	'buffer[0] = 0x80 | '&channel&';'
+  	'buffer[1] = '&key&';'
+  	'buffer[2] = '&velocity&';'
+	 'int status;'
+  	 'if ((status = snd_rawmidi_write(midiout, buffer, 3)) < 0) {
+     	errormessage("Problem writing to MIDI output: %s", snd_strerror(status));'
+     	rawmidi!midi_error('status' as Integer)
+     	'exit(1);
+     }'
+  end
+
+
+  statechart RawMidiSC init Disconnected {
+  	
+  	state Disconnected {
+  		
+  		transition -> Connected event e : rawmidi?midi_open action do
+  			connect(e.card, e.dev, e.sub)
+  		end
+  		
+  	}
+  	
+  	state Connected {
+  		
+  		transition -> Disconnected event rawmidi?midi_close action do
+  			connected = false
+  		end
+  		
+  		internal event e : rawmidi?midi_out action do
+  			sendByte(e.b)
+  		end
+  		
+  	}
+  }
+}

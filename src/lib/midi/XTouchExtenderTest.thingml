@@ -1,0 +1,17 @@
+import "XTouchExtenderClient.thingml"
+
+
+configuration XTouchExtenderTest 
+@add_c_libraries "asound"
+{
+	instance midi : RawMidi
+	instance parser : MidiParser
+	connector parser.rawmidi => midi.rawmidi
+	
+	instance xtouch : XTouchExtender
+	connector xtouch.midi => parser.midi
+	
+	instance test : XTouchExtenderClient
+	connector test.xtouch => xtouch.xtouch
+}
+

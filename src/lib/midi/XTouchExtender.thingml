@@ -1,0 +1,121 @@
+import "MidiParser.thingml"
+
+thing fragment XTouchExtenderMsgs {
+	
+	message slider(ch : UInt8, value : UInt8)
+	message pot(ch : UInt8, value : UInt8)
+	
+	message set_slider(ch : UInt8, value : UInt16)
+	message set_pot(ch : UInt8, value : UInt8)
+	message set_meter(ch : UInt8, value : UInt8)
+	
+	message button_press(ch : UInt8, id : UInt8)
+	message button_release(ch : UInt8, id : UInt8)
+	
+	message button_light_on(ch : UInt8, id : UInt8)
+	message button_light_off(ch : UInt8, id : UInt8)
+	message button_light_blink(ch : UInt8, id : UInt8)
+	
+}
+
+/*
+ * Driver for X-Touch Extender in CTRL mode
+ */
+
+thing XTouchExtender includes XTouchExtenderMsgs, MidiMsgs {
+	
+  required port midi {
+  	 sends note_on, note_off, pitch_bend_change, control_change
+  	 receives note_on, note_off, pitch_bend_change, control_change
+  }
+  
+  provided port xtouch {
+  	sends slider, pot, button_press, button_release
+  	receives button_light_on, button_light_off, button_light_blink, set_slider, set_pot, set_meter
+  }
+  
+  statechart XTouchExtenderSC init Running {
+  	
+  	state Running {
+  		
+  		internal event e : midi?note_on action do
+  			//'printf("[->NOTE ON] ch:%d, key:%d, vel:%d\n", '&e.channel&', '&e.key&', '&e.velocity&');'
+  			print "[->] NOTE ON \t\tchannel:" print e.channel print " \tkey:" print e.key print " \tvelocity:" print e.velocity print "\n"
+  			//midi!note_on(e.channel, e.key, e.velocity)
+  			
+  			if (e.key >= 110 and e.key<118) do // This is a slider touch event
+  				if (e.velocity == 0) xtouch!button_press(e.key-110, 0)
+  				else xtouch!button_release(e.key-110, 0)
+  			end
+  			else if (e.key >= 32 and e.key<40) do // Select button press
+  				if (e.velocity == 0) xtouch!button_press(e.key-32, 1)
+  				else xtouch!button_release(e.key-32, 1)
+  			end
+  			else if (e.key >= 24 and e.key<32) do // Mute button press
+  				if (e.velocity == 0) xtouch!button_press(e.key-24, 2)
+  				else xtouch!button_release(e.key-24, 2)
+  			end
+  			else if (e.key >= 16 and e.key<24) do // Solo button press
+  				if (e.velocity == 0) xtouch!button_press(e.key-16, 3)
+  				else xtouch!button_release(e.key-16, 3)
+  			end
+  			else if (e.key >= 8 and e.key<16) do // Rec button press
+  				if (e.velocity == 0) xtouch!button_press(e.key-8, 4)
+  				else xtouch!button_release(e.key-8, 4)
+  			end
+  			else if (e.key >= 0 and e.key<8) do // Pot button press
+  				if (e.velocity == 0) xtouch!button_press(e.key, 5)
+  				else xtouch!button_release(e.key, 5)
+  			end
+  		end
+  		
+  		internal event e : midi?control_change action do
+  			print "[->] CONTROL CHG \tchannel:" print e.channel print " \tcontrol:" print e.ctrl print " \tvelocity:" print e.value print "\n"
+  			//midi!control_change(e.channel, e.ctrl, e.value)
+  			
+  			if (e.ctrl >= 70 and e.ctrl<78) do // This is a slider change
+  				xtouch!slider(e.ctrl-70, e.value)
+  			end
+  			else if (e.ctrl >= 80 and e.ctrl<88) do // This is a slider change
+  				xtouch!pot(e.ctrl-80, e.value)
+  			end
+  			
+  		end
+  		
+  		internal event e : xtouch?set_slider action do
+  			midi!control_change(0, 70 + e.ch, e.value)
+  		end
+  		
+  		internal event e : xtouch?set_pot action do
+  			midi!control_change(0, 80 + e.ch, e.value)
+  		end
+  		
+  		internal event e : xtouch?set_meter action do
+  			midi!control_change(0, 90 + e.ch, e.value)
+  		end
+  		
+  		internal event e : xtouch?button_light_off action do
+  			if (e.id == 1) midi!note_on(0, e.ch + 32, 0)
+  			if (e.id == 2) midi!note_on(0, e.ch + 24, 0)
+  			if (e.id == 3) midi!note_on(0, e.ch + 16, 0)
+  			if (e.id == 4) midi!note_on(0, e.ch + 8, 0)
+  		end
+  		
+  		internal event e : xtouch?button_light_blink action do
+  			if (e.id == 1) midi!note_on(0, e.ch + 32, 64)
+  			if (e.id == 2) midi!note_on(0, e.ch + 24, 64)
+  			if (e.id == 3) midi!note_on(0, e.ch + 16, 64)
+  			if (e.id == 4) midi!note_on(0, e.ch + 8, 64)
+  		end
+  		
+  		internal event e : xtouch?button_light_on action do
+  			if (e.id == 1) midi!note_on(0, e.ch + 32, 127)
+  			if (e.id == 2) midi!note_on(0, e.ch + 24, 127)
+  			if (e.id == 3) midi!note_on(0, e.ch + 16, 127)
+  			if (e.id == 4) midi!note_on(0, e.ch + 8, 127)
+  		end
+  		
+  	}
+  }
+}
+

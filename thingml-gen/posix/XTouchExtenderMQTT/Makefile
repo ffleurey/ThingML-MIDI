@@ -1,8 +1,8 @@
 # CC = /*CC*/
 LIBS = -lpthread -l asound -l mosquitto
 CFLAGS = -O2 -w
-SRCS = RawMidi.c MidiParser.c XTouchExtender.c XTouchExtenderMQTT_cfg.c MQTT.c runtime.c
-OBJS = RawMidi.o MidiParser.o XTouchExtender.o XTouchExtenderMQTT_cfg.o MQTT.o runtime.o
+SRCS = MidiParser.c RawMidi.c XTouchExtender.c XTouchExtenderMQTT_cfg.c MQTT.c Timer.c runtime.c
+OBJS = MidiParser.o RawMidi.o XTouchExtender.o XTouchExtenderMQTT_cfg.o MQTT.o Timer.o runtime.o
 
 all : XTouchExtenderMQTT
 

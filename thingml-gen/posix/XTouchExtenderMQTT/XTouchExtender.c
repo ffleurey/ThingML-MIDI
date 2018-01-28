@@ -18,10 +18,14 @@ void XTouchExtender_send_midi_note_on(struct XTouchExtender_Instance *_instance,
 void XTouchExtender_send_midi_note_off(struct XTouchExtender_Instance *_instance, uint8_t channel, uint8_t key, uint8_t velocity);
 void XTouchExtender_send_midi_pitch_bend_change(struct XTouchExtender_Instance *_instance, uint8_t channel, uint16_t vpbend);
 void XTouchExtender_send_midi_control_change(struct XTouchExtender_Instance *_instance, uint8_t channel, uint8_t ctrl, uint8_t value);
+void XTouchExtender_send_clock_timer_start(struct XTouchExtender_Instance *_instance, uint8_t id, uint32_t time);
+void XTouchExtender_send_clock_timer_cancel(struct XTouchExtender_Instance *_instance, uint8_t id);
 void XTouchExtender_send_xtouch_slider(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t value);
 void XTouchExtender_send_xtouch_pot(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t value);
 void XTouchExtender_send_xtouch_button_press(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t id);
 void XTouchExtender_send_xtouch_button_release(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t id);
+void XTouchExtender_send_xtouch_slider_slow(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t value);
+void XTouchExtender_send_xtouch_pot_slow(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t value);
 //Prototypes: Function
 // Declaration of functions:
 
@@ -33,6 +37,13 @@ void XTouchExtender_XTouchExtenderSC_OnEntry(int state, struct XTouchExtender_In
 switch(state) {
 case XTOUCHEXTENDER_XTOUCHEXTENDERSC_STATE:{
 _instance->XTouchExtender_XTouchExtenderSC_State = XTOUCHEXTENDER_XTOUCHEXTENDERSC_RUNNING_STATE;
+;uint8_t i = 0;
+while(i < 8) {
+_instance->XTouchExtender_XTouchExtenderSC_last_slider_var[i] = 0xFF;
+_instance->XTouchExtender_XTouchExtenderSC_last_pot_var[i] = 0xFF;
+i = i + 1;
+
+}
 XTouchExtender_XTouchExtenderSC_OnEntry(_instance->XTouchExtender_XTouchExtenderSC_State, _instance);
 break;
 }
@@ -56,135 +67,6 @@ default: break;
 }
 
 // Event Handlers for incoming messages:
-void XTouchExtender_handle_xtouch_button_light_blink(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t id) {
-if(!(_instance->active)) return;
-//Region XTouchExtenderSC
-uint8_t XTouchExtender_XTouchExtenderSC_State_event_consumed = 0;
-if (_instance->XTouchExtender_XTouchExtenderSC_State == XTOUCHEXTENDER_XTOUCHEXTENDERSC_RUNNING_STATE) {
-if (XTouchExtender_XTouchExtenderSC_State_event_consumed == 0 && 1) {
-if(id == 1) {
-XTouchExtender_send_midi_note_on(_instance, 0, ch + 32, 64);
-
-}
-if(id == 2) {
-XTouchExtender_send_midi_note_on(_instance, 0, ch + 24, 64);
-
-}
-if(id == 3) {
-XTouchExtender_send_midi_note_on(_instance, 0, ch + 16, 64);
-
-}
-if(id == 4) {
-XTouchExtender_send_midi_note_on(_instance, 0, ch + 8, 64);
-
-}
-XTouchExtender_XTouchExtenderSC_State_event_consumed = 1;
-}
-}
-//End Region XTouchExtenderSC
-//End dsregion XTouchExtenderSC
-//Session list: 
-}
-void XTouchExtender_handle_xtouch_set_slider(struct XTouchExtender_Instance *_instance, uint8_t ch, uint16_t value) {
-if(!(_instance->active)) return;
-//Region XTouchExtenderSC
-uint8_t XTouchExtender_XTouchExtenderSC_State_event_consumed = 0;
-if (_instance->XTouchExtender_XTouchExtenderSC_State == XTOUCHEXTENDER_XTOUCHEXTENDERSC_RUNNING_STATE) {
-if (XTouchExtender_XTouchExtenderSC_State_event_consumed == 0 && 1) {
-XTouchExtender_send_midi_control_change(_instance, 0, 70 + ch, value);
-XTouchExtender_XTouchExtenderSC_State_event_consumed = 1;
-}
-}
-//End Region XTouchExtenderSC
-//End dsregion XTouchExtenderSC
-//Session list: 
-}
-void XTouchExtender_handle_xtouch_set_meter(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t value) {
-if(!(_instance->active)) return;
-//Region XTouchExtenderSC
-uint8_t XTouchExtender_XTouchExtenderSC_State_event_consumed = 0;
-if (_instance->XTouchExtender_XTouchExtenderSC_State == XTOUCHEXTENDER_XTOUCHEXTENDERSC_RUNNING_STATE) {
-if (XTouchExtender_XTouchExtenderSC_State_event_consumed == 0 && 1) {
-XTouchExtender_send_midi_control_change(_instance, 0, 90 + ch, value);
-XTouchExtender_XTouchExtenderSC_State_event_consumed = 1;
-}
-}
-//End Region XTouchExtenderSC
-//End dsregion XTouchExtenderSC
-//Session list: 
-}
-void XTouchExtender_handle_xtouch_button_light_off(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t id) {
-if(!(_instance->active)) return;
-//Region XTouchExtenderSC
-uint8_t XTouchExtender_XTouchExtenderSC_State_event_consumed = 0;
-if (_instance->XTouchExtender_XTouchExtenderSC_State == XTOUCHEXTENDER_XTOUCHEXTENDERSC_RUNNING_STATE) {
-if (XTouchExtender_XTouchExtenderSC_State_event_consumed == 0 && 1) {
-if(id == 1) {
-XTouchExtender_send_midi_note_on(_instance, 0, ch + 32, 0);
-
-}
-if(id == 2) {
-XTouchExtender_send_midi_note_on(_instance, 0, ch + 24, 0);
-
-}
-if(id == 3) {
-XTouchExtender_send_midi_note_on(_instance, 0, ch + 16, 0);
-
-}
-if(id == 4) {
-XTouchExtender_send_midi_note_on(_instance, 0, ch + 8, 0);
-
-}
-XTouchExtender_XTouchExtenderSC_State_event_consumed = 1;
-}
-}
-//End Region XTouchExtenderSC
-//End dsregion XTouchExtenderSC
-//Session list: 
-}
-void XTouchExtender_handle_xtouch_button_light_on(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t id) {
-if(!(_instance->active)) return;
-//Region XTouchExtenderSC
-uint8_t XTouchExtender_XTouchExtenderSC_State_event_consumed = 0;
-if (_instance->XTouchExtender_XTouchExtenderSC_State == XTOUCHEXTENDER_XTOUCHEXTENDERSC_RUNNING_STATE) {
-if (XTouchExtender_XTouchExtenderSC_State_event_consumed == 0 && 1) {
-if(id == 1) {
-XTouchExtender_send_midi_note_on(_instance, 0, ch + 32, 127);
-
-}
-if(id == 2) {
-XTouchExtender_send_midi_note_on(_instance, 0, ch + 24, 127);
-
-}
-if(id == 3) {
-XTouchExtender_send_midi_note_on(_instance, 0, ch + 16, 127);
-
-}
-if(id == 4) {
-XTouchExtender_send_midi_note_on(_instance, 0, ch + 8, 127);
-
-}
-XTouchExtender_XTouchExtenderSC_State_event_consumed = 1;
-}
-}
-//End Region XTouchExtenderSC
-//End dsregion XTouchExtenderSC
-//Session list: 
-}
-void XTouchExtender_handle_xtouch_set_pot(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t value) {
-if(!(_instance->active)) return;
-//Region XTouchExtenderSC
-uint8_t XTouchExtender_XTouchExtenderSC_State_event_consumed = 0;
-if (_instance->XTouchExtender_XTouchExtenderSC_State == XTOUCHEXTENDER_XTOUCHEXTENDERSC_RUNNING_STATE) {
-if (XTouchExtender_XTouchExtenderSC_State_event_consumed == 0 && 1) {
-XTouchExtender_send_midi_control_change(_instance, 0, 80 + ch, value);
-XTouchExtender_XTouchExtenderSC_State_event_consumed = 1;
-}
-}
-//End Region XTouchExtenderSC
-//End dsregion XTouchExtenderSC
-//Session list: 
-}
 void XTouchExtender_handle_midi_control_change(struct XTouchExtender_Instance *_instance, uint8_t channel, uint8_t ctrl, uint8_t value) {
 if(!(_instance->active)) return;
 //Region XTouchExtenderSC
@@ -199,11 +81,25 @@ fprintf(stdout, " \tvelocity:");
 fprintf(stdout, "%i",value);
 fprintf(stdout, "\n");
 if(ctrl >= 70 && ctrl < 78) {
-XTouchExtender_send_xtouch_slider(_instance, ctrl - 70, value);
+;uint8_t idx = ctrl - 70;
+if(_instance->XTouchExtender_XTouchExtenderSC_last_slider_var[idx]
+ == 0xFF) {
+XTouchExtender_send_clock_timer_start(_instance, idx, 333);
+
+}
+_instance->XTouchExtender_XTouchExtenderSC_last_slider_var[idx] = value;
+XTouchExtender_send_xtouch_slider(_instance, idx, value);
 
 } else {
 if(ctrl >= 80 && ctrl < 88) {
-XTouchExtender_send_xtouch_pot(_instance, ctrl - 80, value);
+;uint8_t idx = ctrl - 80;
+if(_instance->XTouchExtender_XTouchExtenderSC_last_pot_var[idx]
+ == 0xFF) {
+XTouchExtender_send_clock_timer_start(_instance, idx + 8, 333);
+
+}
+_instance->XTouchExtender_XTouchExtenderSC_last_pot_var[idx] = value;
+XTouchExtender_send_xtouch_pot(_instance, idx, value);
 
 }
 
@@ -305,6 +201,162 @@ XTouchExtender_XTouchExtenderSC_State_event_consumed = 1;
 //End dsregion XTouchExtenderSC
 //Session list: 
 }
+void XTouchExtender_handle_clock_timer_timeout(struct XTouchExtender_Instance *_instance, uint8_t id) {
+if(!(_instance->active)) return;
+//Region XTouchExtenderSC
+uint8_t XTouchExtender_XTouchExtenderSC_State_event_consumed = 0;
+if (_instance->XTouchExtender_XTouchExtenderSC_State == XTOUCHEXTENDER_XTOUCHEXTENDERSC_RUNNING_STATE) {
+if (XTouchExtender_XTouchExtenderSC_State_event_consumed == 0 && 1) {
+if(id < 8) {
+XTouchExtender_send_xtouch_slider_slow(_instance, id, _instance->XTouchExtender_XTouchExtenderSC_last_slider_var[id]
+);
+_instance->XTouchExtender_XTouchExtenderSC_last_slider_var[id] = 0xFF;
+
+} else {
+if(id < 16) {
+XTouchExtender_send_xtouch_pot_slow(_instance, id - 8, _instance->XTouchExtender_XTouchExtenderSC_last_pot_var[id - 8]
+);
+_instance->XTouchExtender_XTouchExtenderSC_last_pot_var[id - 8] = 0xFF;
+
+}
+
+}
+XTouchExtender_XTouchExtenderSC_State_event_consumed = 1;
+}
+}
+//End Region XTouchExtenderSC
+//End dsregion XTouchExtenderSC
+//Session list: 
+}
+void XTouchExtender_handle_xtouch_set_pot(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t value) {
+if(!(_instance->active)) return;
+//Region XTouchExtenderSC
+uint8_t XTouchExtender_XTouchExtenderSC_State_event_consumed = 0;
+if (_instance->XTouchExtender_XTouchExtenderSC_State == XTOUCHEXTENDER_XTOUCHEXTENDERSC_RUNNING_STATE) {
+if (XTouchExtender_XTouchExtenderSC_State_event_consumed == 0 && 1) {
+XTouchExtender_send_midi_control_change(_instance, 0, 80 + ch, value);
+XTouchExtender_XTouchExtenderSC_State_event_consumed = 1;
+}
+}
+//End Region XTouchExtenderSC
+//End dsregion XTouchExtenderSC
+//Session list: 
+}
+void XTouchExtender_handle_xtouch_button_light_off(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t id) {
+if(!(_instance->active)) return;
+//Region XTouchExtenderSC
+uint8_t XTouchExtender_XTouchExtenderSC_State_event_consumed = 0;
+if (_instance->XTouchExtender_XTouchExtenderSC_State == XTOUCHEXTENDER_XTOUCHEXTENDERSC_RUNNING_STATE) {
+if (XTouchExtender_XTouchExtenderSC_State_event_consumed == 0 && 1) {
+if(id == 1) {
+XTouchExtender_send_midi_note_on(_instance, 0, ch + 32, 0);
+
+}
+if(id == 2) {
+XTouchExtender_send_midi_note_on(_instance, 0, ch + 24, 0);
+
+}
+if(id == 3) {
+XTouchExtender_send_midi_note_on(_instance, 0, ch + 16, 0);
+
+}
+if(id == 4) {
+XTouchExtender_send_midi_note_on(_instance, 0, ch + 8, 0);
+
+}
+XTouchExtender_XTouchExtenderSC_State_event_consumed = 1;
+}
+}
+//End Region XTouchExtenderSC
+//End dsregion XTouchExtenderSC
+//Session list: 
+}
+void XTouchExtender_handle_xtouch_button_light_blink(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t id) {
+if(!(_instance->active)) return;
+//Region XTouchExtenderSC
+uint8_t XTouchExtender_XTouchExtenderSC_State_event_consumed = 0;
+if (_instance->XTouchExtender_XTouchExtenderSC_State == XTOUCHEXTENDER_XTOUCHEXTENDERSC_RUNNING_STATE) {
+if (XTouchExtender_XTouchExtenderSC_State_event_consumed == 0 && 1) {
+if(id == 1) {
+XTouchExtender_send_midi_note_on(_instance, 0, ch + 32, 64);
+
+}
+if(id == 2) {
+XTouchExtender_send_midi_note_on(_instance, 0, ch + 24, 64);
+
+}
+if(id == 3) {
+XTouchExtender_send_midi_note_on(_instance, 0, ch + 16, 64);
+
+}
+if(id == 4) {
+XTouchExtender_send_midi_note_on(_instance, 0, ch + 8, 64);
+
+}
+XTouchExtender_XTouchExtenderSC_State_event_consumed = 1;
+}
+}
+//End Region XTouchExtenderSC
+//End dsregion XTouchExtenderSC
+//Session list: 
+}
+void XTouchExtender_handle_xtouch_set_slider(struct XTouchExtender_Instance *_instance, uint8_t ch, uint16_t value) {
+if(!(_instance->active)) return;
+//Region XTouchExtenderSC
+uint8_t XTouchExtender_XTouchExtenderSC_State_event_consumed = 0;
+if (_instance->XTouchExtender_XTouchExtenderSC_State == XTOUCHEXTENDER_XTOUCHEXTENDERSC_RUNNING_STATE) {
+if (XTouchExtender_XTouchExtenderSC_State_event_consumed == 0 && 1) {
+XTouchExtender_send_midi_control_change(_instance, 0, 70 + ch, value);
+XTouchExtender_XTouchExtenderSC_State_event_consumed = 1;
+}
+}
+//End Region XTouchExtenderSC
+//End dsregion XTouchExtenderSC
+//Session list: 
+}
+void XTouchExtender_handle_xtouch_button_light_on(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t id) {
+if(!(_instance->active)) return;
+//Region XTouchExtenderSC
+uint8_t XTouchExtender_XTouchExtenderSC_State_event_consumed = 0;
+if (_instance->XTouchExtender_XTouchExtenderSC_State == XTOUCHEXTENDER_XTOUCHEXTENDERSC_RUNNING_STATE) {
+if (XTouchExtender_XTouchExtenderSC_State_event_consumed == 0 && 1) {
+if(id == 1) {
+XTouchExtender_send_midi_note_on(_instance, 0, ch + 32, 127);
+
+}
+if(id == 2) {
+XTouchExtender_send_midi_note_on(_instance, 0, ch + 24, 127);
+
+}
+if(id == 3) {
+XTouchExtender_send_midi_note_on(_instance, 0, ch + 16, 127);
+
+}
+if(id == 4) {
+XTouchExtender_send_midi_note_on(_instance, 0, ch + 8, 127);
+
+}
+XTouchExtender_XTouchExtenderSC_State_event_consumed = 1;
+}
+}
+//End Region XTouchExtenderSC
+//End dsregion XTouchExtenderSC
+//Session list: 
+}
+void XTouchExtender_handle_xtouch_set_meter(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t value) {
+if(!(_instance->active)) return;
+//Region XTouchExtenderSC
+uint8_t XTouchExtender_XTouchExtenderSC_State_event_consumed = 0;
+if (_instance->XTouchExtender_XTouchExtenderSC_State == XTOUCHEXTENDER_XTOUCHEXTENDERSC_RUNNING_STATE) {
+if (XTouchExtender_XTouchExtenderSC_State_event_consumed == 0 && 1) {
+XTouchExtender_send_midi_control_change(_instance, 0, 90 + ch, value);
+XTouchExtender_XTouchExtenderSC_State_event_consumed = 1;
+}
+}
+//End Region XTouchExtenderSC
+//End dsregion XTouchExtenderSC
+//Session list: 
+}
 
 // Observers for outgoing messages:
 void (*external_XTouchExtender_send_midi_note_on_listener)(struct XTouchExtender_Instance *, uint8_t, uint8_t, uint8_t)= 0x0;
@@ -359,6 +411,32 @@ if (XTouchExtender_send_midi_control_change_listener != 0x0) XTouchExtender_send
 if (external_XTouchExtender_send_midi_control_change_listener != 0x0) external_XTouchExtender_send_midi_control_change_listener(_instance, channel, ctrl, value);
 ;
 }
+void (*external_XTouchExtender_send_clock_timer_start_listener)(struct XTouchExtender_Instance *, uint8_t, uint32_t)= 0x0;
+void (*XTouchExtender_send_clock_timer_start_listener)(struct XTouchExtender_Instance *, uint8_t, uint32_t)= 0x0;
+void register_external_XTouchExtender_send_clock_timer_start_listener(void (*_listener)(struct XTouchExtender_Instance *, uint8_t, uint32_t)){
+external_XTouchExtender_send_clock_timer_start_listener = _listener;
+}
+void register_XTouchExtender_send_clock_timer_start_listener(void (*_listener)(struct XTouchExtender_Instance *, uint8_t, uint32_t)){
+XTouchExtender_send_clock_timer_start_listener = _listener;
+}
+void XTouchExtender_send_clock_timer_start(struct XTouchExtender_Instance *_instance, uint8_t id, uint32_t time){
+if (XTouchExtender_send_clock_timer_start_listener != 0x0) XTouchExtender_send_clock_timer_start_listener(_instance, id, time);
+if (external_XTouchExtender_send_clock_timer_start_listener != 0x0) external_XTouchExtender_send_clock_timer_start_listener(_instance, id, time);
+;
+}
+void (*external_XTouchExtender_send_clock_timer_cancel_listener)(struct XTouchExtender_Instance *, uint8_t)= 0x0;
+void (*XTouchExtender_send_clock_timer_cancel_listener)(struct XTouchExtender_Instance *, uint8_t)= 0x0;
+void register_external_XTouchExtender_send_clock_timer_cancel_listener(void (*_listener)(struct XTouchExtender_Instance *, uint8_t)){
+external_XTouchExtender_send_clock_timer_cancel_listener = _listener;
+}
+void register_XTouchExtender_send_clock_timer_cancel_listener(void (*_listener)(struct XTouchExtender_Instance *, uint8_t)){
+XTouchExtender_send_clock_timer_cancel_listener = _listener;
+}
+void XTouchExtender_send_clock_timer_cancel(struct XTouchExtender_Instance *_instance, uint8_t id){
+if (XTouchExtender_send_clock_timer_cancel_listener != 0x0) XTouchExtender_send_clock_timer_cancel_listener(_instance, id);
+if (external_XTouchExtender_send_clock_timer_cancel_listener != 0x0) external_XTouchExtender_send_clock_timer_cancel_listener(_instance, id);
+;
+}
 void (*external_XTouchExtender_send_xtouch_slider_listener)(struct XTouchExtender_Instance *, uint8_t, uint8_t)= 0x0;
 void (*XTouchExtender_send_xtouch_slider_listener)(struct XTouchExtender_Instance *, uint8_t, uint8_t)= 0x0;
 void register_external_XTouchExtender_send_xtouch_slider_listener(void (*_listener)(struct XTouchExtender_Instance *, uint8_t, uint8_t)){
@@ -409,6 +487,32 @@ XTouchExtender_send_xtouch_button_release_listener = _listener;
 void XTouchExtender_send_xtouch_button_release(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t id){
 if (XTouchExtender_send_xtouch_button_release_listener != 0x0) XTouchExtender_send_xtouch_button_release_listener(_instance, ch, id);
 if (external_XTouchExtender_send_xtouch_button_release_listener != 0x0) external_XTouchExtender_send_xtouch_button_release_listener(_instance, ch, id);
+;
+}
+void (*external_XTouchExtender_send_xtouch_slider_slow_listener)(struct XTouchExtender_Instance *, uint8_t, uint8_t)= 0x0;
+void (*XTouchExtender_send_xtouch_slider_slow_listener)(struct XTouchExtender_Instance *, uint8_t, uint8_t)= 0x0;
+void register_external_XTouchExtender_send_xtouch_slider_slow_listener(void (*_listener)(struct XTouchExtender_Instance *, uint8_t, uint8_t)){
+external_XTouchExtender_send_xtouch_slider_slow_listener = _listener;
+}
+void register_XTouchExtender_send_xtouch_slider_slow_listener(void (*_listener)(struct XTouchExtender_Instance *, uint8_t, uint8_t)){
+XTouchExtender_send_xtouch_slider_slow_listener = _listener;
+}
+void XTouchExtender_send_xtouch_slider_slow(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t value){
+if (XTouchExtender_send_xtouch_slider_slow_listener != 0x0) XTouchExtender_send_xtouch_slider_slow_listener(_instance, ch, value);
+if (external_XTouchExtender_send_xtouch_slider_slow_listener != 0x0) external_XTouchExtender_send_xtouch_slider_slow_listener(_instance, ch, value);
+;
+}
+void (*external_XTouchExtender_send_xtouch_pot_slow_listener)(struct XTouchExtender_Instance *, uint8_t, uint8_t)= 0x0;
+void (*XTouchExtender_send_xtouch_pot_slow_listener)(struct XTouchExtender_Instance *, uint8_t, uint8_t)= 0x0;
+void register_external_XTouchExtender_send_xtouch_pot_slow_listener(void (*_listener)(struct XTouchExtender_Instance *, uint8_t, uint8_t)){
+external_XTouchExtender_send_xtouch_pot_slow_listener = _listener;
+}
+void register_XTouchExtender_send_xtouch_pot_slow_listener(void (*_listener)(struct XTouchExtender_Instance *, uint8_t, uint8_t)){
+XTouchExtender_send_xtouch_pot_slow_listener = _listener;
+}
+void XTouchExtender_send_xtouch_pot_slow(struct XTouchExtender_Instance *_instance, uint8_t ch, uint8_t value){
+if (XTouchExtender_send_xtouch_pot_slow_listener != 0x0) XTouchExtender_send_xtouch_pot_slow_listener(_instance, ch, value);
+if (external_XTouchExtender_send_xtouch_pot_slow_listener != 0x0) external_XTouchExtender_send_xtouch_pot_slow_listener(_instance, ch, value);
 ;
 }
 

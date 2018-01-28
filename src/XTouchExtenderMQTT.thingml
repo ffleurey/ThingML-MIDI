@@ -1,7 +1,7 @@
 import "lib/midi/XTouchExtender.thingml"
 
 protocol MQTT 	@serializer "JSON"
-  				@mqtt_broker_address 	"192.168.8.5" 
+  				@mqtt_broker_address 	"localhost" //"192.168.8.5" 
   				@mqtt_publish_topic 	"sh/xtouch/state"
   				@mqtt_subscribe_topic 	"sh/xtouch/cmd"
   				@trace_level "1";
@@ -15,6 +15,8 @@ configuration XTouchExtenderMQTT
 	
 	instance xtouch : XTouchExtender
 	connector xtouch.midi => parser.midi
+	
+	connector xtouch.clock over Timer @nb_soft_timer "32"
 	
 	connector xtouch.xtouch over MQTT
 }

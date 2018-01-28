@@ -1,7 +1,7 @@
 import "lib/midi/XTouchExtenderClient.thingml"
 
 protocol MQTT 	@serializer "JSON"
-  				@mqtt_broker_address 	"192.168.8.5" 
+  				@mqtt_broker_address 	"localhost" //"192.168.8.5" 
   				@mqtt_publish_topic 	"sh/xtouch/cmd"
   				@mqtt_subscribe_topic 	"sh/xtouch/state"
   				@trace_level "1";

@@ -1,9 +1,14 @@
 import "MidiParser.thingml"
+import "../_Timer.thingml"
 
 thing fragment XTouchExtenderMsgs {
 	
 	message slider(ch : UInt8, value : UInt8)
 	message pot(ch : UInt8, value : UInt8)
+	
+	// Same as above but with a slower event rate
+	message slider_slow(ch : UInt8, value : UInt8)
+	message pot_slow(ch : UInt8, value : UInt8)
 	
 	message set_slider(ch : UInt8, value : UInt16)
 	message set_pot(ch : UInt8, value : UInt8)
@@ -22,19 +27,36 @@ thing fragment XTouchExtenderMsgs {
  * Driver for X-Touch Extender in CTRL mode
  */
 
-thing XTouchExtender includes XTouchExtenderMsgs, MidiMsgs {
+thing XTouchExtender includes XTouchExtenderMsgs, MidiMsgs, TimerMsgs {
 	
   required port midi {
   	 sends note_on, note_off, pitch_bend_change, control_change
   	 receives note_on, note_off, pitch_bend_change, control_change
   }
   
+  required port clock {
+  	sends timer_start, timer_cancel
+  	receives timer_timeout
+  }
+  
   provided port xtouch {
-  	sends slider, pot, button_press, button_release
+  	sends slider, pot, button_press, button_release, slider_slow, pot_slow
   	receives button_light_on, button_light_off, button_light_blink, set_slider, set_pot, set_meter
   }
   
   statechart XTouchExtenderSC init Running {
+  	
+  	property last_slider : UInt8[8]
+  	property last_pot 	 : UInt8[8]
+  	
+  	on entry do
+  		var i : UInt8 = 0
+  		while(i<8) do
+  			last_slider[i] = 0xFF
+  			last_pot[i] = 0xFF
+  			i=i+1
+  		end
+  	end
   	
   	state Running {
   		
@@ -69,17 +91,33 @@ thing XTouchExtender includes XTouchExtenderMsgs, MidiMsgs {
   			end
   		end
   		
+  		internal event e : clock?timer_timeout action do
+  			if (e.id < 8) do			// Slider
+  				xtouch!slider_slow(e.id, last_slider[e.id])
+  				last_slider[e.id] = 0xFF
+  			end
+  			else if (e.id < 16) do		// Pot
+  				xtouch!pot_slow(e.id-8, last_pot[e.id-8])
+  				last_pot[e.id-8] = 0xFF
+  			end
+  		end
+  		
   		internal event e : midi?control_change action do
   			print "[->] CONTROL CHG \tchannel:" print e.channel print " \tcontrol:" print e.ctrl print " \tvelocity:" print e.value print "\n"
   			//midi!control_change(e.channel, e.ctrl, e.value)
   			
   			if (e.ctrl >= 70 and e.ctrl<78) do // This is a slider change
-  				xtouch!slider(e.ctrl-70, e.value)
+  			    var idx : UInt8 = e.ctrl-70
+  			    if (last_slider[idx] == 0xFF) clock!timer_start(idx, 333)
+  			    last_slider[idx] = e.value
+  				xtouch!slider(idx, e.value)
   			end
-  			else if (e.ctrl >= 80 and e.ctrl<88) do // This is a slider change
-  				xtouch!pot(e.ctrl-80, e.value)
+  			else if (e.ctrl >= 80 and e.ctrl<88) do // This is a pot change
+  				var idx : UInt8 = e.ctrl-80
+  				if (last_pot[idx] == 0xFF) clock!timer_start(idx+8, 333)
+  				last_pot[idx] = e.value
+  				xtouch!pot(idx, e.value)
   			end
-  			
   		end
   		
   		internal event e : xtouch?set_slider action do

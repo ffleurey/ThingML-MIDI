@@ -10,6 +10,7 @@ configuration XTouchExtenderTest
 	
 	instance xtouch : XTouchExtender
 	connector xtouch.midi => parser.midi
+	connector xtouch.clock over Timer @nb_soft_timer "32"
 	
 	instance test : XTouchExtenderClient
 	connector test.xtouch => xtouch.xtouch

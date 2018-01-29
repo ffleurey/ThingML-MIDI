@@ -104,7 +104,7 @@ void f_RawMidi_start_read_thread(struct RawMidi_Instance *_instance)
   pthread_mutex_unlock(params.lock);
 }// Definition of function connect
 uint8_t f_RawMidi_connect(struct RawMidi_Instance *_instance, uint8_t card, uint8_t dev, uint8_t sub) {
-const char* portname = "hw:2,0,0";
+const char* portname = "hw:1,0,0";
 	   int status;
 	   int mode = SND_RAWMIDI_SYNC;
 	
@@ -174,10 +174,10 @@ _instance->RawMidi_RawMidiSC_State = RAWMIDI_RAWMIDISC_DISCONNECTED_STATE;
 RawMidi_RawMidiSC_OnEntry(_instance->RawMidi_RawMidiSC_State, _instance);
 break;
 }
-case RAWMIDI_RAWMIDISC_DISCONNECTED_STATE:{
+case RAWMIDI_RAWMIDISC_CONNECTED_STATE:{
 break;
 }
-case RAWMIDI_RAWMIDISC_CONNECTED_STATE:{
+case RAWMIDI_RAWMIDISC_DISCONNECTED_STATE:{
 break;
 }
 default: break;
@@ -190,15 +190,29 @@ switch(state) {
 case RAWMIDI_RAWMIDISC_STATE:{
 RawMidi_RawMidiSC_OnExit(_instance->RawMidi_RawMidiSC_State, _instance);
 break;}
-case RAWMIDI_RAWMIDISC_DISCONNECTED_STATE:{
-break;}
 case RAWMIDI_RAWMIDISC_CONNECTED_STATE:{
+break;}
+case RAWMIDI_RAWMIDISC_DISCONNECTED_STATE:{
 break;}
 default: break;
 }
 }
 
 // Event Handlers for incoming messages:
+void RawMidi_handle_rawmidi_midi_out(struct RawMidi_Instance *_instance, uint8_t b) {
+if(!(_instance->active)) return;
+//Region RawMidiSC
+uint8_t RawMidi_RawMidiSC_State_event_consumed = 0;
+if (_instance->RawMidi_RawMidiSC_State == RAWMIDI_RAWMIDISC_CONNECTED_STATE) {
+if (RawMidi_RawMidiSC_State_event_consumed == 0 && 1) {
+f_RawMidi_sendByte(_instance, b);
+RawMidi_RawMidiSC_State_event_consumed = 1;
+}
+}
+//End Region RawMidiSC
+//End dsregion RawMidiSC
+//Session list: 
+}
 void RawMidi_handle_rawmidi_midi_open(struct RawMidi_Instance *_instance, uint8_t card, uint8_t dev, uint8_t sub) {
 if(!(_instance->active)) return;
 //Region RawMidiSC
@@ -226,20 +240,6 @@ RawMidi_RawMidiSC_OnExit(RAWMIDI_RAWMIDISC_CONNECTED_STATE, _instance);
 _instance->RawMidi_RawMidiSC_State = RAWMIDI_RAWMIDISC_DISCONNECTED_STATE;
 _instance->RawMidi_connected_var = 0;
 RawMidi_RawMidiSC_OnEntry(RAWMIDI_RAWMIDISC_DISCONNECTED_STATE, _instance);
-RawMidi_RawMidiSC_State_event_consumed = 1;
-}
-}
-//End Region RawMidiSC
-//End dsregion RawMidiSC
-//Session list: 
-}
-void RawMidi_handle_rawmidi_midi_out(struct RawMidi_Instance *_instance, uint8_t b) {
-if(!(_instance->active)) return;
-//Region RawMidiSC
-uint8_t RawMidi_RawMidiSC_State_event_consumed = 0;
-if (_instance->RawMidi_RawMidiSC_State == RAWMIDI_RAWMIDISC_CONNECTED_STATE) {
-if (RawMidi_RawMidiSC_State_event_consumed == 0 && 1) {
-f_RawMidi_sendByte(_instance, b);
 RawMidi_RawMidiSC_State_event_consumed = 1;
 }
 }

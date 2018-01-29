@@ -4,8 +4,8 @@
 #include <stdint.h>
 
 #include "MidiParser.h"
-#include "RawMidi.h"
 #include "XTouchExtender.h"
+#include "RawMidi.h"
 
 
 #define NB_SOFT_TIMERS 32

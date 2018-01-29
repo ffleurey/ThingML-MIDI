@@ -38,9 +38,9 @@ uint8_t RawMidi_connected_var;
 };
 // Declaration of prototypes outgoing messages :
 void RawMidi_RawMidiSC_OnEntry(int state, struct RawMidi_Instance *_instance);
+void RawMidi_handle_rawmidi_midi_out(struct RawMidi_Instance *_instance, uint8_t b);
 void RawMidi_handle_rawmidi_midi_open(struct RawMidi_Instance *_instance, uint8_t card, uint8_t dev, uint8_t sub);
 void RawMidi_handle_rawmidi_midi_close(struct RawMidi_Instance *_instance);
-void RawMidi_handle_rawmidi_midi_out(struct RawMidi_Instance *_instance, uint8_t b);
 // Declaration of callbacks for incoming messages:
 void register_RawMidi_send_rawmidi_midi_in_listener(void (*_listener)(struct RawMidi_Instance *, uint8_t));
 void register_external_RawMidi_send_rawmidi_midi_in_listener(void (*_listener)(struct RawMidi_Instance *, uint8_t));
@@ -48,9 +48,9 @@ void register_RawMidi_send_rawmidi_midi_error_listener(void (*_listener)(struct 
 void register_external_RawMidi_send_rawmidi_midi_error_listener(void (*_listener)(struct RawMidi_Instance *, int));
 
 // Definition of the states:
-#define RAWMIDI_RAWMIDISC_STATE 0
-#define RAWMIDI_RAWMIDISC_DISCONNECTED_STATE 1
-#define RAWMIDI_RAWMIDISC_CONNECTED_STATE 2
+#define RAWMIDI_RAWMIDISC_CONNECTED_STATE 0
+#define RAWMIDI_RAWMIDISC_STATE 1
+#define RAWMIDI_RAWMIDISC_DISCONNECTED_STATE 2
 
 
 

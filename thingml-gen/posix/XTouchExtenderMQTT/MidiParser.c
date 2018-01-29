@@ -36,19 +36,19 @@ MidiParser_send_rawmidi_midi_open(_instance, 2, 0, 0);
 MidiParser_MidiEchoSC_OnEntry(_instance->MidiParser_MidiEchoSC_State, _instance);
 break;
 }
-case MIDIPARSER_MIDIECHOSC_WAITING_STATE:{
+case MIDIPARSER_MIDIECHOSC_CTRLCHANGE_STATE:{
+_instance->MidiParser_MidiEchoSC_CtrlChange_idx_var = 0;
 break;
 }
 case MIDIPARSER_MIDIECHOSC_NOTEON_STATE:{
 _instance->MidiParser_MidiEchoSC_NoteOn_idx_var = 0;
 break;
 }
-case MIDIPARSER_MIDIECHOSC_NOTEOFF_STATE:{
-_instance->MidiParser_MidiEchoSC_NoteOff_idx_var = 0;
+case MIDIPARSER_MIDIECHOSC_WAITING_STATE:{
 break;
 }
-case MIDIPARSER_MIDIECHOSC_CTRLCHANGE_STATE:{
-_instance->MidiParser_MidiEchoSC_CtrlChange_idx_var = 0;
+case MIDIPARSER_MIDIECHOSC_NOTEOFF_STATE:{
+_instance->MidiParser_MidiEchoSC_NoteOff_idx_var = 0;
 break;
 }
 case MIDIPARSER_MIDIECHOSC_PBENDCHANGE_STATE:{
@@ -65,13 +65,13 @@ switch(state) {
 case MIDIPARSER_MIDIECHOSC_STATE:{
 MidiParser_MidiEchoSC_OnExit(_instance->MidiParser_MidiEchoSC_State, _instance);
 break;}
-case MIDIPARSER_MIDIECHOSC_WAITING_STATE:{
+case MIDIPARSER_MIDIECHOSC_CTRLCHANGE_STATE:{
 break;}
 case MIDIPARSER_MIDIECHOSC_NOTEON_STATE:{
 break;}
-case MIDIPARSER_MIDIECHOSC_NOTEOFF_STATE:{
+case MIDIPARSER_MIDIECHOSC_WAITING_STATE:{
 break;}
-case MIDIPARSER_MIDIECHOSC_CTRLCHANGE_STATE:{
+case MIDIPARSER_MIDIECHOSC_NOTEOFF_STATE:{
 break;}
 case MIDIPARSER_MIDIECHOSC_PBENDCHANGE_STATE:{
 break;}
@@ -80,6 +80,20 @@ default: break;
 }
 
 // Event Handlers for incoming messages:
+void MidiParser_handle_midi_note_on(struct MidiParser_Instance *_instance, uint8_t channel, uint8_t key, uint8_t velocity) {
+if(!(_instance->active)) return;
+//Region MidiEchoSC
+uint8_t MidiParser_MidiEchoSC_State_event_consumed = 0;
+//End Region MidiEchoSC
+//End dsregion MidiEchoSC
+//Session list: 
+if (1) {
+MidiParser_send_rawmidi_midi_out(_instance, 0x90 + channel);
+MidiParser_send_rawmidi_midi_out(_instance, key);
+MidiParser_send_rawmidi_midi_out(_instance, velocity);
+MidiParser_MidiEchoSC_State_event_consumed = 1;
+}
+}
 void MidiParser_handle_midi_pitch_bend_change(struct MidiParser_Instance *_instance, uint8_t channel, uint16_t vpbend) {
 if(!(_instance->active)) return;
 //Region MidiEchoSC
@@ -93,20 +107,6 @@ MidiParser_send_rawmidi_midi_out(_instance, 0xE0 + channel);
 ;uint8_t b2 = vpbend >> 7;
 MidiParser_send_rawmidi_midi_out(_instance, b1);
 MidiParser_send_rawmidi_midi_out(_instance, b2);
-MidiParser_MidiEchoSC_State_event_consumed = 1;
-}
-}
-void MidiParser_handle_midi_note_off(struct MidiParser_Instance *_instance, uint8_t channel, uint8_t key, uint8_t velocity) {
-if(!(_instance->active)) return;
-//Region MidiEchoSC
-uint8_t MidiParser_MidiEchoSC_State_event_consumed = 0;
-//End Region MidiEchoSC
-//End dsregion MidiEchoSC
-//Session list: 
-if (1) {
-MidiParser_send_rawmidi_midi_out(_instance, 0x80 + channel);
-MidiParser_send_rawmidi_midi_out(_instance, key);
-MidiParser_send_rawmidi_midi_out(_instance, velocity);
 MidiParser_MidiEchoSC_State_event_consumed = 1;
 }
 }
@@ -124,7 +124,7 @@ MidiParser_send_rawmidi_midi_out(_instance, value);
 MidiParser_MidiEchoSC_State_event_consumed = 1;
 }
 }
-void MidiParser_handle_midi_note_on(struct MidiParser_Instance *_instance, uint8_t channel, uint8_t key, uint8_t velocity) {
+void MidiParser_handle_midi_note_off(struct MidiParser_Instance *_instance, uint8_t channel, uint8_t key, uint8_t velocity) {
 if(!(_instance->active)) return;
 //Region MidiEchoSC
 uint8_t MidiParser_MidiEchoSC_State_event_consumed = 0;
@@ -132,7 +132,7 @@ uint8_t MidiParser_MidiEchoSC_State_event_consumed = 0;
 //End dsregion MidiEchoSC
 //Session list: 
 if (1) {
-MidiParser_send_rawmidi_midi_out(_instance, 0x90 + channel);
+MidiParser_send_rawmidi_midi_out(_instance, 0x80 + channel);
 MidiParser_send_rawmidi_midi_out(_instance, key);
 MidiParser_send_rawmidi_midi_out(_instance, velocity);
 MidiParser_MidiEchoSC_State_event_consumed = 1;

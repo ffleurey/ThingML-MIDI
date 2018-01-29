@@ -195,7 +195,7 @@ static uint8_t *jump_space(uint8_t *msg, int len, uint8_t *ptr)
     return NULL;
 }
 
-static int parse_button_release(uint8_t *msg, int size, uint8_t *out_buffer) {
+static int parse_slider(uint8_t *msg, int size, uint8_t *out_buffer) {
     uint8_t *ptr = msg;
     uint8_t *start = NULL;
     uint8_t *end = NULL;
@@ -230,10 +230,10 @@ static int parse_button_release(uint8_t *msg, int size, uint8_t *out_buffer) {
             u_ch.ch = strtoul(pstart, &ptr, 10);
             memcpy(&out_buffer[2], u_ch.bytebuffer, 1);
         }
-        else if (strncmp("id", start, end-start) == 0) {
-            union u_id_t { uint8_t id; uint8_t bytebuffer[1]; } u_id;
-            u_id.id = strtoul(pstart, &ptr, 10);
-            memcpy(&out_buffer[3], u_id.bytebuffer, 1);
+        else if (strncmp("value", start, end-start) == 0) {
+            union u_value_t { uint8_t value; uint8_t bytebuffer[1]; } u_value;
+            u_value.value = strtoul(pstart, &ptr, 10);
+            memcpy(&out_buffer[3], u_value.bytebuffer, 1);
         }
         ptr = jump_to(msg, size, ptr, ',', '}');
         if (!ptr) return -8;
@@ -299,7 +299,7 @@ static int parse_pot(uint8_t *msg, int size, uint8_t *out_buffer) {
     return 4;
 }
 
-static int parse_slider(uint8_t *msg, int size, uint8_t *out_buffer) {
+static int parse_button_press(uint8_t *msg, int size, uint8_t *out_buffer) {
     uint8_t *ptr = msg;
     uint8_t *start = NULL;
     uint8_t *end = NULL;
@@ -334,10 +334,10 @@ static int parse_slider(uint8_t *msg, int size, uint8_t *out_buffer) {
             u_ch.ch = strtoul(pstart, &ptr, 10);
             memcpy(&out_buffer[2], u_ch.bytebuffer, 1);
         }
-        else if (strncmp("value", start, end-start) == 0) {
-            union u_value_t { uint8_t value; uint8_t bytebuffer[1]; } u_value;
-            u_value.value = strtoul(pstart, &ptr, 10);
-            memcpy(&out_buffer[3], u_value.bytebuffer, 1);
+        else if (strncmp("id", start, end-start) == 0) {
+            union u_id_t { uint8_t id; uint8_t bytebuffer[1]; } u_id;
+            u_id.id = strtoul(pstart, &ptr, 10);
+            memcpy(&out_buffer[3], u_id.bytebuffer, 1);
         }
         ptr = jump_to(msg, size, ptr, ',', '}');
         if (!ptr) return -8;
@@ -351,7 +351,7 @@ static int parse_slider(uint8_t *msg, int size, uint8_t *out_buffer) {
     return 4;
 }
 
-static int parse_button_press(uint8_t *msg, int size, uint8_t *out_buffer) {
+static int parse_button_release(uint8_t *msg, int size, uint8_t *out_buffer) {
     uint8_t *ptr = msg;
     uint8_t *start = NULL;
     uint8_t *end = NULL;
@@ -432,17 +432,17 @@ void MQTT_parser(uint8_t *msg, int size, struct MQTT_Instance *_instance) {
     // Parse the message
     int result = -1;
     if (0) {}
-    else if (strncmp("button_release", start, end-start) == 0) {
-        result = parse_button_release(ptr, size-(ptr-msg), enqueue_buffer);
+    else if (strncmp("slider", start, end-start) == 0) {
+        result = parse_slider(ptr, size-(ptr-msg), enqueue_buffer);
     }
     else if (strncmp("pot", start, end-start) == 0) {
         result = parse_pot(ptr, size-(ptr-msg), enqueue_buffer);
     }
-    else if (strncmp("slider", start, end-start) == 0) {
-        result = parse_slider(ptr, size-(ptr-msg), enqueue_buffer);
-    }
     else if (strncmp("button_press", start, end-start) == 0) {
         result = parse_button_press(ptr, size-(ptr-msg), enqueue_buffer);
+    }
+    else if (strncmp("button_release", start, end-start) == 0) {
+        result = parse_button_release(ptr, size-(ptr-msg), enqueue_buffer);
     }
 
     // Enqueue the message
@@ -483,60 +483,6 @@ void MQTT_send_message(uint8_t *msg, int msglen, int topic)
     }
 }
 
-// Forwarding of messages MQTT::XTouchExtenderClient::xtouch::button_light_on
-void forward_MQTT_XTouchExtenderClient_send_xtouch_button_light_on(struct XTouchExtenderClient_Instance *_instance, uint8_t ch, uint8_t id){
-    uint8_t buffer[41];
-    int index = 0;
-    int result;
-
-    //Start of serialized message
-    result = sprintf(&buffer[index], "%.*s", 41-index, "{\"button_light_on\":{");
-    if (result >= 0) { index += result; } else { return; }
-    // Parameter ch
-    result = sprintf(&buffer[index], "%.*s", 41-index, "\"ch\":");
-    if (result >= 0) { index += result; } else { return; }
-    result = sprintf(&buffer[index], "%u", ch);
-    if (result >= 0) { index += result; } else { return; }
-    // Parameter id
-    result = sprintf(&buffer[index], "%.*s", 41-index, ",\"id\":");
-    if (result >= 0) { index += result; } else { return; }
-    result = sprintf(&buffer[index], "%u", id);
-    if (result >= 0) { index += result; } else { return; }
-    //End of serialized message
-    result = sprintf(&buffer[index], "%.*s", 41-index, "}}");
-    if (result >= 0) { index += result; } else { return; }
-
-    // Publish the serialized message
-    MQTT_send_message(buffer, index, 0);
-}
-
-// Forwarding of messages MQTT::XTouchExtenderClient::xtouch::set_meter
-void forward_MQTT_XTouchExtenderClient_send_xtouch_set_meter(struct XTouchExtenderClient_Instance *_instance, uint8_t ch, uint8_t value){
-    uint8_t buffer[38];
-    int index = 0;
-    int result;
-
-    //Start of serialized message
-    result = sprintf(&buffer[index], "%.*s", 38-index, "{\"set_meter\":{");
-    if (result >= 0) { index += result; } else { return; }
-    // Parameter ch
-    result = sprintf(&buffer[index], "%.*s", 38-index, "\"ch\":");
-    if (result >= 0) { index += result; } else { return; }
-    result = sprintf(&buffer[index], "%u", ch);
-    if (result >= 0) { index += result; } else { return; }
-    // Parameter value
-    result = sprintf(&buffer[index], "%.*s", 38-index, ",\"value\":");
-    if (result >= 0) { index += result; } else { return; }
-    result = sprintf(&buffer[index], "%u", value);
-    if (result >= 0) { index += result; } else { return; }
-    //End of serialized message
-    result = sprintf(&buffer[index], "%.*s", 38-index, "}}");
-    if (result >= 0) { index += result; } else { return; }
-
-    // Publish the serialized message
-    MQTT_send_message(buffer, index, 0);
-}
-
 // Forwarding of messages MQTT::XTouchExtenderClient::xtouch::set_pot
 void forward_MQTT_XTouchExtenderClient_send_xtouch_set_pot(struct XTouchExtenderClient_Instance *_instance, uint8_t ch, uint8_t value){
     uint8_t buffer[36];
@@ -558,33 +504,6 @@ void forward_MQTT_XTouchExtenderClient_send_xtouch_set_pot(struct XTouchExtender
     if (result >= 0) { index += result; } else { return; }
     //End of serialized message
     result = sprintf(&buffer[index], "%.*s", 36-index, "}}");
-    if (result >= 0) { index += result; } else { return; }
-
-    // Publish the serialized message
-    MQTT_send_message(buffer, index, 0);
-}
-
-// Forwarding of messages MQTT::XTouchExtenderClient::xtouch::button_light_off
-void forward_MQTT_XTouchExtenderClient_send_xtouch_button_light_off(struct XTouchExtenderClient_Instance *_instance, uint8_t ch, uint8_t id){
-    uint8_t buffer[42];
-    int index = 0;
-    int result;
-
-    //Start of serialized message
-    result = sprintf(&buffer[index], "%.*s", 42-index, "{\"button_light_off\":{");
-    if (result >= 0) { index += result; } else { return; }
-    // Parameter ch
-    result = sprintf(&buffer[index], "%.*s", 42-index, "\"ch\":");
-    if (result >= 0) { index += result; } else { return; }
-    result = sprintf(&buffer[index], "%u", ch);
-    if (result >= 0) { index += result; } else { return; }
-    // Parameter id
-    result = sprintf(&buffer[index], "%.*s", 42-index, ",\"id\":");
-    if (result >= 0) { index += result; } else { return; }
-    result = sprintf(&buffer[index], "%u", id);
-    if (result >= 0) { index += result; } else { return; }
-    //End of serialized message
-    result = sprintf(&buffer[index], "%.*s", 42-index, "}}");
     if (result >= 0) { index += result; } else { return; }
 
     // Publish the serialized message
@@ -639,6 +558,87 @@ void forward_MQTT_XTouchExtenderClient_send_xtouch_button_light_blink(struct XTo
     if (result >= 0) { index += result; } else { return; }
     //End of serialized message
     result = sprintf(&buffer[index], "%.*s", 44-index, "}}");
+    if (result >= 0) { index += result; } else { return; }
+
+    // Publish the serialized message
+    MQTT_send_message(buffer, index, 0);
+}
+
+// Forwarding of messages MQTT::XTouchExtenderClient::xtouch::set_meter
+void forward_MQTT_XTouchExtenderClient_send_xtouch_set_meter(struct XTouchExtenderClient_Instance *_instance, uint8_t ch, uint8_t value){
+    uint8_t buffer[38];
+    int index = 0;
+    int result;
+
+    //Start of serialized message
+    result = sprintf(&buffer[index], "%.*s", 38-index, "{\"set_meter\":{");
+    if (result >= 0) { index += result; } else { return; }
+    // Parameter ch
+    result = sprintf(&buffer[index], "%.*s", 38-index, "\"ch\":");
+    if (result >= 0) { index += result; } else { return; }
+    result = sprintf(&buffer[index], "%u", ch);
+    if (result >= 0) { index += result; } else { return; }
+    // Parameter value
+    result = sprintf(&buffer[index], "%.*s", 38-index, ",\"value\":");
+    if (result >= 0) { index += result; } else { return; }
+    result = sprintf(&buffer[index], "%u", value);
+    if (result >= 0) { index += result; } else { return; }
+    //End of serialized message
+    result = sprintf(&buffer[index], "%.*s", 38-index, "}}");
+    if (result >= 0) { index += result; } else { return; }
+
+    // Publish the serialized message
+    MQTT_send_message(buffer, index, 0);
+}
+
+// Forwarding of messages MQTT::XTouchExtenderClient::xtouch::button_light_off
+void forward_MQTT_XTouchExtenderClient_send_xtouch_button_light_off(struct XTouchExtenderClient_Instance *_instance, uint8_t ch, uint8_t id){
+    uint8_t buffer[42];
+    int index = 0;
+    int result;
+
+    //Start of serialized message
+    result = sprintf(&buffer[index], "%.*s", 42-index, "{\"button_light_off\":{");
+    if (result >= 0) { index += result; } else { return; }
+    // Parameter ch
+    result = sprintf(&buffer[index], "%.*s", 42-index, "\"ch\":");
+    if (result >= 0) { index += result; } else { return; }
+    result = sprintf(&buffer[index], "%u", ch);
+    if (result >= 0) { index += result; } else { return; }
+    // Parameter id
+    result = sprintf(&buffer[index], "%.*s", 42-index, ",\"id\":");
+    if (result >= 0) { index += result; } else { return; }
+    result = sprintf(&buffer[index], "%u", id);
+    if (result >= 0) { index += result; } else { return; }
+    //End of serialized message
+    result = sprintf(&buffer[index], "%.*s", 42-index, "}}");
+    if (result >= 0) { index += result; } else { return; }
+
+    // Publish the serialized message
+    MQTT_send_message(buffer, index, 0);
+}
+
+// Forwarding of messages MQTT::XTouchExtenderClient::xtouch::button_light_on
+void forward_MQTT_XTouchExtenderClient_send_xtouch_button_light_on(struct XTouchExtenderClient_Instance *_instance, uint8_t ch, uint8_t id){
+    uint8_t buffer[41];
+    int index = 0;
+    int result;
+
+    //Start of serialized message
+    result = sprintf(&buffer[index], "%.*s", 41-index, "{\"button_light_on\":{");
+    if (result >= 0) { index += result; } else { return; }
+    // Parameter ch
+    result = sprintf(&buffer[index], "%.*s", 41-index, "\"ch\":");
+    if (result >= 0) { index += result; } else { return; }
+    result = sprintf(&buffer[index], "%u", ch);
+    if (result >= 0) { index += result; } else { return; }
+    // Parameter id
+    result = sprintf(&buffer[index], "%.*s", 41-index, ",\"id\":");
+    if (result >= 0) { index += result; } else { return; }
+    result = sprintf(&buffer[index], "%u", id);
+    if (result >= 0) { index += result; } else { return; }
+    //End of serialized message
+    result = sprintf(&buffer[index], "%.*s", 41-index, "}}");
     if (result >= 0) { index += result; } else { return; }
 
     // Publish the serialized message
